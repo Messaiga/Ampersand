@@ -34,7 +34,8 @@ concurrency:
 jobs:
   build:
     name: Build ${{ matrix.disk-type }} for ${{ matrix.image-name }}
-    runs-on: ${{ inputs.platform == 'amd64' && 'ubuntu-26.04' || 'ubuntu-26.04-arm' }}
+    # inputs.platform is empty on pull requests, so default to amd64.
+    runs-on: ${{ inputs.platform == 'arm64' && 'ubuntu-26.04-arm' || 'ubuntu-26.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -83,6 +84,12 @@ jobs:
             sed "s|@IMAGE@|${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}|g" "${f}" > "./disk_config_filled/${f##*/}"
           done
           cat ./disk_config_filled/iso.toml
+
+      # The builder pulls as root, so log root's podman in. Needed while the
+      # GHCR packages are private.
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Build disk images
         id: build
