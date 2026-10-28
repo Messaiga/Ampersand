@@ -19,6 +19,7 @@ fi
 | `10-gnome-extensions.sh` | Installs the extensions in `gnome-extensions.txt` from extensions.gnome.org (newest release for the image's GNOME; fails if one has none) |
 | `20-keyd.sh` | Installs keyd (Super leader key) from COPR and enables it |
 | `30-icons.sh` | Installs the Hatter and MoreWaita icon themes from pinned tags |
+| `40-custom.sh` | Installs `custom/` (Flatpak lists, Brewfiles, ujust recipes) where Bluefin's tools find them |
 | `90-gnome-defaults.sh` | Compiles the GNOME defaults from `system_files/` and enables the accent-folder service |
 
 The installed extension versions are recorded in `/usr/share/ampersand/gnome-extensions.txt` in the image.

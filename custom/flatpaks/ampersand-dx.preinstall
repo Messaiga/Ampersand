@@ -1,0 +1,47 @@
+# Extra Flatpaks on ampersand-dx only (same mechanism as ampersand.preinstall).
+# Tavern (in upstream's DX list) is left out: it isn't on Flathub (own OCI remote).
+
+[Flatpak Preinstall de.leopoldluley.Clapgrep]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.github.getnf.embellish]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.podman_desktop.PodmanDesktop]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall me.iepure.devtoolbox]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gnome.Builder]
+Branch=stable
+IsRuntime=false
+
+
+[Flatpak Preinstall org.nickvision.money]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall com.github.marhkb.Pods]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.flatpak.Builder]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.freedesktop.Bustle]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gnome.dspy]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.fedoraproject.MediaWriter]
+Branch=stable
+IsRuntime=false
