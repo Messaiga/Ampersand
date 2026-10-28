@@ -2,6 +2,8 @@
 Description=Match Hatter folder icons to the GNOME accent colour
 PartOf=graphical-session.target
 After=graphical-session.target
+# Not for the login screen's own session (GDM runs as a system user).
+ConditionUser=!@system
 
 [Service]
 ExecStart=/usr/libexec/ampersand-icon-accent

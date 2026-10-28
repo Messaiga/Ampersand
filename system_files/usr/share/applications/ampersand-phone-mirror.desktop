@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Phone Mirror
+Comment=Show and control your Android phone (Wireless Debugging is on only while open)
+Exec=ampersand-phone-mirror
+Icon=phone
+Categories=Utility;
+Keywords=android;scrcpy;adb;phone;

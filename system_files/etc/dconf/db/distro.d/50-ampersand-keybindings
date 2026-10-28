@@ -17,3 +17,18 @@ name='Whisp (leader W)'
 binding='<Control><Alt><Super>f'
 command='flatpak run io.github.tanaybhomia.DeepDive'
 name='Deep Dive (leader F)'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation]
+binding='<Control><Alt><Super>d'
+command='gdbus call --session --dest io.speedofsound.SpeedOfSound --object-path /io/speedofsound/SpeedOfSound --method org.gtk.Actions.Activate trigger [] {}'
+name='Speed of Sound: start/stop dictation (leader D)'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle]
+binding='<Control><Alt><Super>g'
+command='flatpak run io.github.qwersyk.Newelle'
+name='Newelle assistant (leader G)'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-phone]
+binding='<Control><Alt><Super>k'
+command='ampersand-phone-mirror'
+name='Phone mirror (leader K)'
