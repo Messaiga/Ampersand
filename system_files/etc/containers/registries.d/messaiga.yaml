@@ -1,0 +1,4 @@
+# Ampersand images are signed with cosign; fetch the signatures stored next to them.
+docker:
+  ghcr.io/messaiga:
+    use-sigstore-attachments: true

@@ -67,7 +67,7 @@ ampersand-switch-variant:
         *) echo "Not running an Ampersand image (${current})." >&2; exit 1 ;;
     esac
     gum confirm "Switch to ${target}?" || exit 0
-    sudo bootc switch "${target}"
+    sudo bootc switch --enforce-container-sigpolicy "${target}"
     echo "Reboot to start ${target##*/}."
 
 # Set up the local AI assistant: a model served by RamaLama, used by Newelle (Super then G). "undo" removes it

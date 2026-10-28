@@ -20,6 +20,7 @@ fi
 | `20-keyd.sh` | Installs keyd (Super leader key) from COPR and enables it |
 | `30-icons.sh` | Installs the Hatter and MoreWaita icon themes from pinned tags |
 | `40-custom.sh` | Installs `custom/` (Flatpak lists, Brewfiles, ujust recipes) where Bluefin's tools find them |
+| `50-signing.sh` | Trusts Ampersand's signing key (`cosign.pub`) for `ghcr.io/messaiga` in `/etc/containers/policy.json` |
 | `90-gnome-defaults.sh` | Compiles the GNOME defaults from `system_files/` and enables the accent-folder service |
 
 The installed extension versions are recorded in `/usr/share/ampersand/gnome-extensions.txt` in the image.

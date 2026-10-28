@@ -41,8 +41,12 @@ Never commit `cosign.key` (it's in `.gitignore`). Keep a copy somewhere safe off
 
 ## Installing
 
-Installer ISOs are built on demand by the *Build disk images* workflow. Switching an existing Bluefin machine (for testing):
+Installer ISOs (and qcow2 VM disks) for both variants are built on demand by the *Build disk images* workflow. An installed system only accepts updates signed with `cosign.pub`.
+
+Switching an existing Bluefin machine (for testing) takes two steps, because Bluefin doesn't know Ampersand's key yet:
 
 ```bash
-sudo bootc switch ghcr.io/messaiga/ampersand-dx:stable
+sudo bootc switch ghcr.io/messaiga/ampersand-dx:stable          # first switch: unverified
+# reboot, then turn on signature checks (Ampersand ships its key):
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand-dx:stable
 ```
