@@ -1,0 +1,21 @@
+#!/bin/bash
+# Keep Hatter's folder colour in step with GNOME's accent colour.
+# Hatter ships one theme per accent (Hatter-Blue, Hatter-Teal, ...). Only acts
+# while a Hatter theme is selected, so picking another icon theme in Tweaks or
+# Refine is left alone.
+
+set -euo pipefail
+
+apply() {
+    local theme accent
+    theme="$(gsettings get org.gnome.desktop.interface icon-theme | tr -d "'")"
+    [[ "${theme}" == Hatter* ]] || return 0
+    accent="$(gsettings get org.gnome.desktop.interface accent-color | tr -d "'")"
+    [[ "${theme}" == "Hatter-${accent^}" ]] && return 0
+    gsettings set org.gnome.desktop.interface icon-theme "Hatter-${accent^}"
+}
+
+apply
+gsettings monitor org.gnome.desktop.interface accent-color | while read -r _; do
+    apply
+done

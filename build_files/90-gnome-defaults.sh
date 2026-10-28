@@ -1,0 +1,20 @@
+#!/bin/bash
+# Compile Ampersand's GNOME defaults into the image.
+
+set -ouex pipefail
+
+# Rebuild the settings schema cache (picks up zz1-ampersand.gschema.override and
+# the extension schemas copied in 10-gnome-extensions.sh). A typo in a key name
+# only prints a warning, so treat any warning about our file as a build error.
+rm -f /usr/share/glib-2.0/schemas/gschemas.compiled
+glib-compile-schemas /usr/share/glib-2.0/schemas 2>&1 | tee /tmp/schemas.log
+if grep -q 'zz1-ampersand' /tmp/schemas.log; then
+    echo "::error::zz1-ampersand.gschema.override has an invalid key or value (see above)"
+    exit 1
+fi
+
+# Rebuild the dconf system database (custom keyboard shortcuts).
+dconf update
+
+# Folder icons follow the accent colour, for every user.
+systemctl --global enable ampersand-icon-accent.service
