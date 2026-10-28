@@ -1,0 +1,19 @@
+# Ampersand leader-key shortcuts (keyd turns "Super, then letter" into
+# Ctrl+Alt+Super+letter). Bluefin's custom0-2 are kept; the shortcut list itself
+# is in zz1-ampersand.gschema.override. Browser, Calculator and Settings use
+# GNOME's built-in launcher keys there instead of a custom entry.
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal]
+binding='<Control><Alt><Super>t'
+command='xdg-terminal-exec'
+name='Terminal (leader T)'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp]
+binding='<Control><Alt><Super>w'
+command='flatpak run io.github.tanaybhomia.Whisp'
+name='Whisp (leader W)'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive]
+binding='<Control><Alt><Super>f'
+command='flatpak run io.github.tanaybhomia.DeepDive'
+name='Deep Dive (leader F)'
