@@ -10,6 +10,7 @@ ARG BASE_TAG=stable
 FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
+COPY custom /custom
 
 # Base Image
 FROM ${BASE_IMAGE}:${BASE_TAG}
