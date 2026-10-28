@@ -6,6 +6,8 @@ set -ouex pipefail
 EXT_DIR=/usr/share/gnome-shell/extensions
 SCHEMA_DIR=/usr/share/glib-2.0/schemas
 EGO=https://extensions.gnome.org
+# extensions.gnome.org sometimes drops connections; retry those too.
+CURL=(curl -fsSL --retry 5 --retry-all-errors --retry-delay 5)
 
 # Tools this step needs (normally already in Bluefin).
 for tool in curl jq unzip; do
@@ -20,14 +22,14 @@ mkdir -p /usr/share/ampersand
 
 grep -vE '^\s*(#|$)' /ctx/gnome-extensions.txt | while read -r uuid; do
     # Ask extensions.gnome.org for the newest release that supports this GNOME.
-    info="$(curl -fsSL --retry 3 "${EGO}/extension-info/?uuid=${uuid}&shell_version=${SHELL_VERSION}")" || {
-        echo "::error::${uuid} has no release for GNOME ${SHELL_VERSION} on extensions.gnome.org"
+    info="$("${CURL[@]}" "${EGO}/extension-info/?uuid=${uuid}&shell_version=${SHELL_VERSION}")" || {
+        echo "::error::${uuid}: no release for GNOME ${SHELL_VERSION}, or extensions.gnome.org unreachable (see curl error above)"
         exit 1
     }
     version="$(jq -r '.version' <<<"${info}")"
     download="$(jq -r '.download_url' <<<"${info}")"
 
-    curl -fsSL --retry 3 -o /tmp/ext.zip "${EGO}${download}"
+    "${CURL[@]}" -o /tmp/ext.zip "${EGO}${download}"
     rm -rf "${EXT_DIR:?}/${uuid}"
     unzip -q /tmp/ext.zip -d "${EXT_DIR}/${uuid}"
     rm -f /tmp/ext.zip
