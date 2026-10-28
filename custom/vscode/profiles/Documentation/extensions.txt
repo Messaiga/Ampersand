@@ -1,0 +1,7 @@
+# Tech docs, video scripts, notes. Markdown tooling without Marp or AI.
+DavidAnson.vscode-markdownlint
+bierner.markdown-mermaid
+yzhang.markdown-all-in-one
+streetsidesoftware.code-spell-checker
+robole.marky-stats
+Gruntfuggly.todo-tree

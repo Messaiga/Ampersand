@@ -1,0 +1,7 @@
+# Slides and styled docs in Markdown, with AI. Export: Terminal > Run Task.
+marp-team.marp-vscode
+DavidAnson.vscode-markdownlint
+bierner.markdown-mermaid
+yzhang.markdown-all-in-one
+anthropic.claude-code
+Google.google-antigravity

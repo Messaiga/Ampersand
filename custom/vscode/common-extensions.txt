@@ -1,0 +1,6 @@
+# Installed in every Ampersand profile. Same three as Bluefin DX's default
+# profile (Dev Containers, Remote - SSH, Container Tools), plus EditorConfig.
+ms-vscode-remote.remote-containers
+ms-vscode-remote.remote-ssh
+ms-azuretools.vscode-containers
+EditorConfig.EditorConfig

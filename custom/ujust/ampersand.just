@@ -190,3 +190,72 @@ ampersand-phone-setup:
     echo "    Trigger: Notification received, app 'KDE Connect', text contains: ${phrase}"
     echo "    Action:  System setting > Global > adb_wifi_enabled = 1"
     echo "Done. Open 'Phone Mirror' or press Super, then K."
+
+# Create the starter VS Code profiles (General, Python, C++, Marp, Documentation) and dev container templates (ampersand-dx)
+[group('Ampersand')]
+ampersand-vscode:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SRC=/usr/share/ampersand/vscode
+    USER_DIR="${HOME}/.config/Code/User"
+    STORAGE="${USER_DIR}/globalStorage/storage.json"
+    if ! command -v code >/dev/null || [[ ! -d "${SRC}" ]]; then
+        echo "VS Code comes with ampersand-dx. Run: ujust ampersand-switch-variant" >&2
+        exit 1
+    fi
+    if pgrep -x code >/dev/null; then
+        echo "Close VS Code first (it rewrites its profile list on exit)." >&2
+        exit 1
+    fi
+
+    # VS Code has no command to create an empty profile, so add any missing ones
+    # to its profile list. Each profile lives in User/profiles/<random id>/.
+    mkdir -p "$(dirname "${STORAGE}")"
+    [[ -s "${STORAGE}" ]] || echo '{}' > "${STORAGE}"
+    cp "${STORAGE}" "${STORAGE}.bak"
+    for dir in "${SRC}"/profiles/*/; do
+        name="$(basename "${dir}")"
+        if ! jq -e --arg n "${name}" '.userDataProfiles // [] | any(.name == $n)' "${STORAGE}" >/dev/null; then
+            id="$(od -An -N4 -tx4 /dev/urandom | tr -d ' ')"
+            jq --arg n "${name}" --arg id "${id}" '.userDataProfiles = ((.userDataProfiles // []) + [{location: $id, name: $n}])' \
+                "${STORAGE}" > "${STORAGE}.tmp" && mv "${STORAGE}.tmp" "${STORAGE}"
+            echo "Created profile ${name}"
+        fi
+    done
+
+    for dir in "${SRC}"/profiles/*/; do
+        name="$(basename "${dir}")"
+        # Stored as a folder name, or as a full URI by some VS Code versions.
+        location="$(jq -r --arg n "${name}" '.userDataProfiles[] | select(.name == $n) | .location
+            | if type == "string" then . else .path | split("/") | last end' "${STORAGE}")"
+        profile_dir="${USER_DIR}/profiles/${location}"
+        mkdir -p "${profile_dir}"
+
+        # Starter settings and tasks. Never overwrites a file you've changed.
+        if [[ ! -e "${profile_dir}/settings.json" ]]; then
+            # Bluefin's defaults (font etc.), then this profile's own settings.
+            jq -s '.[0] * .[1]' /etc/skel/.config/Code/User/settings.json \
+                <(cat "${dir}settings.json" 2>/dev/null || echo '{}') > "${profile_dir}/settings.json"
+        fi
+        if [[ -f "${dir}tasks.json" && ! -e "${profile_dir}/tasks.json" ]]; then
+            cp "${dir}tasks.json" "${profile_dir}/tasks.json"
+        fi
+
+        echo "Installing extensions for ${name}..."
+        grep -hEv '^\s*(#|$)' "${SRC}/common-extensions.txt" "${dir}extensions.txt" | while read -r ext; do
+            code --profile "${name}" --install-extension "${ext}" >/dev/null
+        done
+    done
+
+    # Marp exports mount your fonts folder, so make sure it exists.
+    mkdir -p "${HOME}/.local/share/fonts"
+
+    # Dev container starters, e.g. ~/Templates/devcontainer-python.
+    templates="$(xdg-user-dir TEMPLATES 2>/dev/null || echo "${HOME}/Templates")"
+    mkdir -p "${templates}"
+    for dir in "${SRC}"/devcontainers/*/; do
+        target="${templates}/devcontainer-$(basename "${dir}")"
+        [[ -e "${target}" ]] || cp -r "${dir}" "${target}"
+    done
+    echo "Done. Pick a profile in VS Code: File > New Window with Profile."
+    echo "Dev container starters are in ${templates}."

@@ -16,4 +16,7 @@ if [[ "${IMAGE_NAME}" == "ampersand-dx" ]]; then
     install -Dm0644 /ctx/custom/flatpaks/ampersand-dx.preinstall /usr/share/flatpak/preinstall.d/ampersand-dx.preinstall
     # CLI tools: installed at login by Bluefin's brew-preinstall service.
     install -Dm0644 /ctx/custom/brew/ampersand-dx.Brewfile /usr/share/ublue-os/homebrew/preinstall.d/ampersand-dx.Brewfile
+    # Starter VS Code profiles and dev containers, set up by ujust ampersand-vscode.
+    mkdir -p /usr/share/ampersand
+    cp -r /ctx/custom/vscode /usr/share/ampersand/vscode
 fi

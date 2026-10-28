@@ -1,0 +1,2 @@
+# Nothing extra on the host: compilers and C++ tooling live in the dev
+# container (see devcontainers/cpp). Open a folder, then "Reopen in Container".

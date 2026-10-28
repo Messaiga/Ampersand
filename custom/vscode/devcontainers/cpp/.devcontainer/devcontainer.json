@@ -1,0 +1,15 @@
+{
+    // Starter C++ dev container (GCC, Clang, CMake, GDB). Copy this folder into
+    // a project, open the project in VS Code (C++ profile), then "Reopen in
+    // Container".
+    "name": "C++",
+    "image": "mcr.microsoft.com/devcontainers/cpp:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "usernamehw.errorlens"
+            ]
+        }
+    }
+}
