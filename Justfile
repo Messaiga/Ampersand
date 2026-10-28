@@ -8,6 +8,8 @@ export image_keywords := env_var("IMAGE_KEYWORDS")
 export image_logo_url := env_var("IMAGE_LOGO_URL")
 export default_tag := env_var("DEFAULT_TAG")
 export bib_image := env_var("BIB_IMAGE")
+export base_image := env_var("BASE_IMAGE")
+export base_tag := env_var("BASE_TAG")
 
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
@@ -93,12 +95,18 @@ sudoif command *args:
 #
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag:
+build $target_image=image_name $tag=default_tag $from_image=base_image $from_tag=base_tag:
     #!/usr/bin/env bash
 
     set -euox pipefail
 
+    # Variant name without any registry prefix, e.g. "ampersand" or "ampersand-dx"
+    VARIANT="${target_image##*/}"
+
     BUILD_ARGS=()
+    BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${from_image}")
+    BUILD_ARGS+=("--build-arg" "BASE_TAG=${from_tag}")
+    BUILD_ARGS+=("--build-arg" "IMAGE_NAME=${VARIANT}")
     LABELS=()
     if [[ -z "$(git status -s)" ]]; then
         GIT_SHA=$(git rev-parse --short HEAD)
@@ -118,13 +126,17 @@ build $target_image=image_name $tag=default_tag:
     LABELS+=("--label" "io.artifacthub.package.prerelease=false")
     LABELS+=("--label" "org.opencontainers.image.created=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)")
     LABELS+=("--label" "org.opencontainers.image.description={{ image_desc }}")
-    LABELS+=("--label" "org.opencontainers.image.title={{ image_name }}")
+    LABELS+=("--label" "org.opencontainers.image.title=${VARIANT}")
     LABELS+=("--label" "org.opencontainers.image.vendor={{ repo_organization }}")
 
     # This actually builds the image!
     PODMAN_BUILD_ARGS=("${BUILD_ARGS[@]}" "${LABELS[@]}" --pull=newer --tag "${target_image}:${tag}" --file Containerfile)
 
     podman build "${PODMAN_BUILD_ARGS[@]}" .
+
+# Build the DX variant (ampersand-dx on top of bluefin-dx)
+build-dx $tag=default_tag:
+    just build "{{ image_name }}-dx" "{{ tag }}" "{{ base_image }}-dx" "{{ base_tag }}"
 
 # Split the image for smaller updates (New)!
 rechunk $target_image=image_name $tag=default_tag:

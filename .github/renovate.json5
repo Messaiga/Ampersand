@@ -11,11 +11,11 @@
       "automerge": true,
       "matchUpdateTypes": ["pin", "pinDigest"]
     },
-    // This prevents the default demo image used in ublue-os/image-template
-    // from being pinned as it serves no purpose there
+    // Ampersand follows upstream Bluefin's moving "stable" tag on purpose
+    // (weekly rebuilds pick up new releases), so never pin it to a digest.
     {
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["ghcr.io/ublue-os/bazzite"],
+      "matchPackageNames": ["ghcr.io/ublue-os/bluefin", "ghcr.io/ublue-os/bluefin-dx"],
       "pinDigests": false
     },
     {

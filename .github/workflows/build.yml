@@ -5,7 +5,9 @@ on:
     branches:
       - main
   schedule:
-    - cron: '05 10 * * *'  # 10:05am UTC everyday
+    # Weekly, Wednesdays 10:05 UTC: the day after upstream Bluefin's usual
+    # Tuesday stable release. Run manually (workflow_dispatch) for urgent fixes.
+    - cron: '05 10 * * 3'
   push:
     branches:
       - main
@@ -16,14 +18,25 @@ on:
 env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
-  cancel-in-progress: true
-
 jobs:
   build_push:
-    name: Build and push image
+    name: Build and push ${{ matrix.image_name }}
     runs-on: ubuntu-26.04
+
+    # One job per variant, built in parallel. Both use the same Containerfile;
+    # only the upstream base image differs.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_name: ampersand
+            base_image: ghcr.io/ublue-os/bluefin
+          - image_name: ampersand-dx
+            base_image: ghcr.io/ublue-os/bluefin-dx
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ matrix.image_name }}
+      cancel-in-progress: true
 
     permissions:
       contents: read
@@ -49,9 +62,8 @@ jobs:
       - name: Image Name
         id: image-name
         run: |
-          IMAGE_NAME=$(just image_name)
-
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ matrix.image_name }}" >> $GITHUB_ENV
+          echo "BASE_IMAGE=${{ matrix.base_image }}" >> $GITHUB_ENV
 
       - name: Default Tag
         id: gen-default-tag
@@ -72,7 +84,8 @@ jobs:
         run: |
           just build \
             ${IMAGE_NAME} \
-            ${DEFAULT_TAG}
+            ${DEFAULT_TAG} \
+            ${BASE_IMAGE}
 
       # This is optional, this provides smaller delta updates
       - name: Rechunk with rpm-ostree
@@ -157,6 +170,10 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-image.outputs.digest }}
         run: |
+          if [[ -z "${COSIGN_PRIVATE_KEY}" ]]; then
+            echo "::error::Repository secret SIGNING_SECRET is not set. See README > Signing."
+            exit 1
+          fi
           # https://github.com/containers/container-libs/issues/388
           # https://github.com/coreos/rpm-ostree/issues/5509
           # use old bundle format, so we can use newer cosign 3.X.X instead of 2.X.X
