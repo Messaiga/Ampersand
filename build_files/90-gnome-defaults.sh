@@ -16,5 +16,6 @@ fi
 # Rebuild the dconf system database (custom keyboard shortcuts).
 dconf update
 
-# Folder icons follow the accent colour, for every user.
-systemctl --global enable ampersand-icon-accent.service
+# User services for every user: folder icons follow the accent colour, and the
+# one-time local AI setup at first login.
+systemctl --global enable ampersand-icon-accent.service ampersand-local-ai-firstrun.service

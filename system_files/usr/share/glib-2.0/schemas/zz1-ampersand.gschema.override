@@ -33,7 +33,7 @@ idle-delay=uint32 0
 www=['<Control><Alt><Super>b']
 calculator=['<Control><Alt><Super>c']
 control-center=['<Control><Alt><Super>i']
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-phone/']
 
 #-------------- Extensions --------------#
 

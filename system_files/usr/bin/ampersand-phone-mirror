@@ -1,0 +1,54 @@
+#!/bin/bash
+# Mirror your Android phone with scrcpy. Wireless Debugging is only on while
+# the mirror window is open (spec/03 "Phone mirroring"):
+#   1. Ping the phone through GSConnect with a secret phrase. A MacroDroid macro
+#      on the phone sees it and turns Wireless Debugging on.
+#   2. Find the phone's adb port on the network (mDNS) and connect.
+#   3. Run scrcpy. When it closes, turn Wireless Debugging off again.
+# One-time setup: ujust ampersand-phone-setup (writes the config below).
+
+set -euo pipefail
+
+# scrcpy comes from Homebrew, which a desktop launcher's PATH may not include.
+PATH="${PATH}:/home/linuxbrew/.linuxbrew/bin"
+
+CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/ampersand/phone.conf"
+# Sets GSCONNECT_DEVICE (GSConnect device id), PHONE_SERIAL (adb serial) and
+# PING_PHRASE (the text MacroDroid listens for).
+# shellcheck source=/dev/null
+source "${CONFIG}" 2>/dev/null || {
+    notify-send -i phone "Phone mirror" "Not set up yet. Run: ujust ampersand-phone-setup"
+    exit 1
+}
+
+notify() { notify-send -i phone -h string:x-canonical-private-synchronous:ampersand-phone "Phone mirror" "$1"; }
+
+# 1. Ask the phone to turn on Wireless Debugging. GSConnect exports each device
+#    at a D-Bus path built from its id (runs of non-word characters become "_").
+notify "Asking your phone to turn on Wireless Debugging..."
+device_path="/org/gnome/Shell/Extensions/GSConnect/Device/$(sed -E 's/[^A-Za-z0-9_]+/_/g' <<<"${GSCONNECT_DEVICE}")"
+gdbus call --session \
+    --dest org.gnome.Shell.Extensions.GSConnect \
+    --object-path "${device_path}" \
+    --method org.gtk.Actions.Activate ping "[<'${PING_PHRASE}'>]" '{}' >/dev/null
+
+# 2. Wait for the phone to announce its adb port, then connect.
+target=""
+for _ in $(seq 1 30); do
+    target="$(adb mdns services 2>/dev/null | awk -v s="${PHONE_SERIAL}" '$1 ~ s && $2 ~ /_adb-tls-connect/ {print $3; exit}')"
+    [[ -n "${target}" ]] && break
+    sleep 1
+done
+if [[ -z "${target}" ]]; then
+    notify "Phone not found. Is it unlocked and on the same Wi-Fi?"
+    exit 1
+fi
+adb connect "${target}" >/dev/null
+
+# 3. Mirror. Always turn Wireless Debugging off afterwards, even on errors.
+cleanup() {
+    adb -s "${target}" shell settings put global adb_wifi_enabled 0 2>/dev/null || true
+    adb disconnect "${target}" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+scrcpy -s "${target}" --window-title "Phone" "$@"
