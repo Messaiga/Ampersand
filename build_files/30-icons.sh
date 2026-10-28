@@ -29,7 +29,9 @@ find "${ICONS}/MoreWaita" -name '*.build' -type f -delete
 
 # Hatter: its build script generates one folder-colour theme per GNOME accent.
 git clone --depth 1 --branch "${HATTER_TAG}" https://github.com/Mibea/Hatter "${SRC}/hatter"
-bash "${SRC}/hatter/Build-Hatter.sh" </dev/null
+# The script ends by asking whether to rename icon files with spaces in their
+# names; answer "2" (skip). Those icons are only unused extras.
+echo 2 | bash "${SRC}/hatter/Build-Hatter.sh"
 cp -a "${SRC}/hatter/Build/Hatter" "${ICONS}/"
 for accent in Blue Teal Green Yellow Orange Red Pink Purple Slate; do
     cp -a "${SRC}/hatter/Build/Hatter-${accent}" "${ICONS}/"
