@@ -1,0 +1,24 @@
+# marp-export: Marp CLI plus LibreOffice Impress, so slides can be exported to
+# editable PowerPoint (--pptx --pptx-editable) without installing anything on
+# the host. Used by the Markdown/Marp VS Code profile (spec/07).
+#
+#   podman run --rm -v "$PWD:/home/marp/app:z" ghcr.io/messaiga/marp-export \
+#       --pptx --pptx-editable --allow-local-files slides.md
+
+# Official image: Debian, Node, Chromium and Marp CLI.
+FROM ghcr.io/marp-team/marp-cli:v4.5.1
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libreoffice-impress \
+        fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji fonts-liberation2 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Fail the build if Marp can't find LibreOffice.
+RUN soffice --version
+
+LABEL org.opencontainers.image.title="marp-export" \
+      org.opencontainers.image.description="Marp CLI with LibreOffice Impress for editable PPTX export" \
+      org.opencontainers.image.source="https://github.com/Messaiga/Ampersand"
