@@ -2,26 +2,18 @@
 
 set -ouex pipefail
 
+# IMAGE_NAME is passed in from the Containerfile: "ampersand" or "ampersand-dx".
+IMAGE_NAME="${IMAGE_NAME:-ampersand}"
+export IMAGE_NAME
+
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "/ctx/system_files"/. /
 
-### Install packages
-
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
-
-# this installs a package from fedora repos
-dnf5 install -y tmux
-
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
-
-#### Example for enabling a System Unit File
-
-systemctl enable podman.socket
+# Run the numbered build steps in order (10-*.sh, 20-*.sh, ...).
+# Each step is a small, single-purpose script; see build_files/README.md.
+for step in /ctx/[0-9][0-9]-*.sh; do
+    [[ -e "${step}" ]] || continue
+    echo "::group:: ${step##*/}"
+    bash "${step}"
+    echo "::endgroup::"
+done
