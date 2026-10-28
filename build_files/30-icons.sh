@@ -30,11 +30,17 @@ find "${ICONS}/MoreWaita" -name '*.build' -type f -delete
 # Hatter: its build script generates one folder-colour theme per GNOME accent.
 git clone --depth 1 --branch "${HATTER_TAG}" https://github.com/Mibea/Hatter "${SRC}/hatter"
 # The script ends by asking whether to rename icon files with spaces in their
-# names; answer "2" (skip). Those icons are only unused extras.
+# names; answer "2" (skip) and rename them below, only in the themes we keep.
 echo 2 | bash "${SRC}/hatter/Build-Hatter.sh"
 cp -a "${SRC}/hatter/Build/Hatter" "${ICONS}/"
 for accent in Blue Teal Green Yellow Orange Red Pink Purple Slate; do
     cp -a "${SRC}/hatter/Build/Hatter-${accent}" "${ICONS}/"
+done
+
+# gtk-update-icon-cache rejects file names with spaces ("generated cache was
+# invalid"), so use hyphens, as Hatter's own rename option does.
+find "${ICONS}"/Hatter* -name '* *' -print0 | while IFS= read -r -d '' file; do
+    mv -- "${file}" "${file// /-}"
 done
 
 # Make Hatter fall back to MoreWaita before Adwaita.
