@@ -35,7 +35,10 @@ jobs:
   build:
     name: Build ${{ matrix.disk-type }} for ${{ matrix.image-name }}
     # inputs.platform is empty on pull requests, so default to amd64.
-    runs-on: ${{ inputs.platform == 'arm64' && 'ubuntu-26.04-arm' || 'ubuntu-26.04' }}
+    # Ubuntu 24.04, not 26.04: 26.04's AppArmor/kernel break osbuild's
+    # container-deploy step (https://github.com/osbuild/osbuild/issues/2579).
+    # Move to 26.04 once that issue is fixed.
+    runs-on: ${{ inputs.platform == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
