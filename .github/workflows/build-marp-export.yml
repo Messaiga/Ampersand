@@ -1,0 +1,81 @@
+---
+# Builds the marp-export helper image (containers/marp-export) and publishes it
+# to ghcr.io/messaiga/marp-export. Same schedule and signing as the OS images.
+name: Build marp-export image
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'containers/marp-export/**'
+      - '.github/workflows/build-marp-export.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'containers/marp-export/**'
+      - '.github/workflows/build-marp-export.yml'
+  schedule:
+    - cron: '05 10 * * 3'  # weekly, with the OS images (picks up Debian security updates)
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/marp-export
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Build
+        run: |
+          IMAGE="${IMAGE,,}"  # GHCR paths must be lowercase
+          echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+          podman build --pull=newer -t "${IMAGE}:latest" containers/marp-export
+
+      - name: Smoke test (export a one-slide deck to editable PPTX)
+        run: |
+          mkdir -p /tmp/marp && printf -- '---\nmarp: true\n---\n\n# Hello\n\nAmpersand\n' > /tmp/marp/test.md
+          chmod 777 /tmp/marp
+          podman run --rm -v /tmp/marp:/home/marp/app:z "${IMAGE}:latest" --pptx --pptx-editable test.md
+          test -s /tmp/marp/test.pptx
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        id: push
+        run: |
+          podman push --digestfile=/tmp/digest "${IMAGE}:latest"
+          echo "digest=$(< /tmp/digest)" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.2'
+
+      - name: Sign
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          cosign sign -y --new-bundle-format=false --use-signing-config=false \
+            --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
