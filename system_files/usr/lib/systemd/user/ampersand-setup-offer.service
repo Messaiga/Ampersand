@@ -1,0 +1,14 @@
+[Unit]
+Description=Offer Ampersand's setup once at first login (ujust ampersand-setup)
+After=graphical-session.target
+# Not for the login screen's own session (GDM runs as a system user).
+ConditionUser=!@system
+# Created by the script, so the offer only appears once.
+ConditionPathExists=!%h/.local/state/ampersand/setup-offered
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/ampersand-setup-offer
+
+[Install]
+WantedBy=graphical-session.target

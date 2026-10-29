@@ -1,4 +1,4 @@
-# Optional audio bundle: ujust ampersand-install-audio
+# Optional audio bundle: ujust ampersand-audio (enable or disable)
 flatpak "com.bitwig.BitwigStudio"
 flatpak "fm.reaper.Reaper"
 flatpak "org.ardour.Ardour"

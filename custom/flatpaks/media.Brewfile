@@ -1,4 +1,4 @@
-# Optional media bundle: ujust ampersand-install-media
+# Optional media bundle: ujust ampersand-media (enable or disable)
 flatpak "com.obsproject.Studio"
 flatpak "org.kde.kdenlive"
 flatpak "fr.natron.Natron"

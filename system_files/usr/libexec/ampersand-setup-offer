@@ -1,0 +1,17 @@
+#!/bin/bash
+# First login: offer to run `ujust ampersand-setup` in a terminal.
+# Shown once; the user can always run the recipe later.
+
+set -euo pipefail
+
+state="${XDG_STATE_HOME:-${HOME}/.local/state}/ampersand"
+mkdir -p "${state}"
+touch "${state}/setup-offered"
+
+# notify-send waits for a click and prints the chosen action.
+action="$(notify-send -i preferences-system -A setup="Set up now" \
+    "Welcome to Ampersand" \
+    "Pick what to set up: voice typing, Tailscale, developer tools and more. Later: ujust ampersand-setup")"
+if [[ "${action}" == "setup" ]]; then
+    exec xdg-terminal-exec ujust ampersand-setup
+fi

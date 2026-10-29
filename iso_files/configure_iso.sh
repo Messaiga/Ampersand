@@ -65,8 +65,8 @@ systemctl disable flatpak-preinstall.service
 systemctl --global disable podman-auto-update.timer
 systemctl --global disable ublue-user-setup.service
 
-# Ampersand: no local-AI model download, accent watcher or voice typing in the live session.
-systemctl --global disable ampersand-local-ai-firstrun.service
+# Ampersand: no setup offer, accent watcher or voice typing in the live session.
+systemctl --global disable ampersand-setup-offer.service
 systemctl --global disable ampersand-icon-accent.service
 rm -f /etc/xdg/autostart/ampersand-speedofsound.desktop
 

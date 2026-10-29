@@ -27,7 +27,7 @@
     // (weekly rebuilds pick up new releases), so never pin it to a digest.
     {
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["ghcr.io/ublue-os/bluefin", "ghcr.io/ublue-os/bluefin-dx"],
+      "matchPackageNames": ["ghcr.io/ublue-os/bluefin"],
       "pinDigests": false
     },
     {

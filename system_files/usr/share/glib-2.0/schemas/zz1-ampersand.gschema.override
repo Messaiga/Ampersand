@@ -1,6 +1,6 @@
 # Ampersand's GNOME defaults. Loaded after Bluefin's zz0-bluefin-modifications,
 # so a key set here replaces Bluefin's value. Only defaults: anything a user has
-# changed keeps their value (`ujust ampersand-gnome` resets to these).
+# changed keeps their value (`ujust ampersand-reset` resets to these).
 # Custom keyboard shortcuts live in /etc/dconf/db/distro.d/50-ampersand-keybindings.
 
 [org.gnome.shell]

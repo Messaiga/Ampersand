@@ -100,7 +100,7 @@ build $target_image=image_name $tag=default_tag $from_image=base_image $from_tag
 
     set -euox pipefail
 
-    # Variant name without any registry prefix, e.g. "ampersand" or "ampersand-dx"
+    # Variant name without any registry prefix, e.g. "ampersand"
     VARIANT="${target_image##*/}"
 
     BUILD_ARGS=()
@@ -134,9 +134,6 @@ build $target_image=image_name $tag=default_tag $from_image=base_image $from_tag
 
     podman build "${PODMAN_BUILD_ARGS[@]}" .
 
-# Build the DX variant (ampersand-dx on top of bluefin-dx)
-build-dx $tag=default_tag:
-    just build "{{ image_name }}-dx" "{{ tag }}" "{{ base_image }}-dx" "{{ base_tag }}"
 
 # Split the image for smaller updates (New)!
 rechunk $target_image=image_name $tag=default_tag:
