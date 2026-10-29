@@ -60,12 +60,14 @@ done
 cat /usr/share/ampersand/gnome-extensions.txt
 
 # A schemas/ folder without gschemas.compiled stops the extension from loading.
-for dir in "${EXT_DIR}"/*/schemas; do
+# Only ours are checked: Bluefin ships Custom Command List like that (disabled).
+while read -r uuid _; do
+    dir="${EXT_DIR}/${uuid}/schemas"
     if [[ -d "${dir}" && ! -f "${dir}/gschemas.compiled" ]]; then
         echo "::error::${dir} has no gschemas.compiled, so GNOME can't load that extension"
         exit 1
     fi
-done
+done </usr/share/ampersand/gnome-extensions.txt
 
 # Every extension must be readable by normal users and writable only by root,
 # or GNOME silently skips it.
