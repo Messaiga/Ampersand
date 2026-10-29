@@ -1,0 +1,32 @@
+{
+    // Export the open Marp file with the marp-export container (spec/07), so
+    // nothing is installed on the host. Output lands next to the .md file.
+    // Run with Terminal > Run Task.
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Marp: export PPTX (editable)",
+            "type": "shell",
+            "command": "podman run --rm -v \"${fileDirname}:/home/marp/app:z\" -v \"${env:HOME}/.local/share/fonts:/home/marp/.fonts:ro,z\" ghcr.io/messaiga/marp-export:latest --pptx --pptx-editable --allow-local-files \"${fileBasename}\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "Marp: export PPTX (images, most faithful)",
+            "type": "shell",
+            "command": "podman run --rm -v \"${fileDirname}:/home/marp/app:z\" -v \"${env:HOME}/.local/share/fonts:/home/marp/.fonts:ro,z\" ghcr.io/messaiga/marp-export:latest --pptx --allow-local-files \"${fileBasename}\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "Marp: export PDF",
+            "type": "shell",
+            "command": "podman run --rm -v \"${fileDirname}:/home/marp/app:z\" -v \"${env:HOME}/.local/share/fonts:/home/marp/.fonts:ro,z\" ghcr.io/messaiga/marp-export:latest --pdf --allow-local-files \"${fileBasename}\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "Marp: export HTML",
+            "type": "shell",
+            "command": "podman run --rm -v \"${fileDirname}:/home/marp/app:z\" ghcr.io/messaiga/marp-export:latest --html --allow-local-files \"${fileBasename}\"",
+            "problemMatcher": []
+        }
+    ]
+}

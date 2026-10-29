@@ -1,0 +1,17 @@
+# Containerfiles, Bash, XML, YAML, config. Runs on the host, uses host tools.
+anthropic.claude-code
+Google.google-antigravity
+timonwong.shellcheck
+mads-hacking.bash-ide-vscode
+redhat.vscode-xml
+redhat.vscode-yaml
+tamasfe.even-better-toml
+docker.docker
+exiasr.hadolint
+nefrob.vscode-just-syntax
+coolbear.systemd-unit-file
+ms-kubernetes-tools.vscode-kubernetes-tools
+GitHub.vscode-pull-request-github
+github.vscode-github-actions
+mhutchie.git-graph
+Gruntfuggly.todo-tree

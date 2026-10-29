@@ -1,0 +1,23 @@
+{
+    // Starter Python dev container. Copy this folder into a project, open the
+    // project in VS Code (Python profile), then "Reopen in Container".
+    "name": "Python",
+    "image": "mcr.microsoft.com/devcontainers/python:3",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.debugpy",
+                "charliermarsh.ruff",
+                "ms-toolsai.jupyter",
+                "usernamehw.errorlens"
+            ],
+            "settings": {
+                "[python]": {
+                    "editor.defaultFormatter": "charliermarsh.ruff",
+                    "editor.formatOnSave": true
+                }
+            }
+        }
+    }
+}

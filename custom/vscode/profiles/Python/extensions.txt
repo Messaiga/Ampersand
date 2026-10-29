@@ -1,0 +1,2 @@
+# Nothing extra on the host: Python tooling lives in the dev container
+# (see devcontainers/python). Open a project folder, then "Reopen in Container".
