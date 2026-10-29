@@ -46,17 +46,28 @@ grep -vE '^\s*(#|$)' /ctx/gnome-extensions.txt | while read -r uuid; do
     }
 
     # Move the settings schema to the system schema folder, so Ampersand's
-    # defaults (gschema override) apply to it. A compiled copy inside the
-    # extension would take priority and hide those defaults, so drop it.
-    if [[ -d "${EXT_DIR}/${uuid}/schemas" ]]; then
-        cp "${EXT_DIR}/${uuid}"/schemas/*.gschema.xml "${SCHEMA_DIR}/" 2>/dev/null || true
-        rm -f "${EXT_DIR}/${uuid}/schemas/gschemas.compiled"
+    # defaults (gschema override) apply to it. GNOME only reads the system
+    # schemas when the extension has no schemas/ folder of its own (if the
+    # folder exists it insists on a gschemas.compiled there), so remove it.
+    if compgen -G "${EXT_DIR}/${uuid}/schemas/*.gschema.xml" >/dev/null; then
+        cp "${EXT_DIR}/${uuid}"/schemas/*.gschema.xml "${SCHEMA_DIR}/"
+        rm -rf "${EXT_DIR:?}/${uuid:?}/schemas"
     fi
 
     echo "${uuid} ${version}" >>/usr/share/ampersand/gnome-extensions.txt
 done
 
 cat /usr/share/ampersand/gnome-extensions.txt
+
+# A schemas/ folder without gschemas.compiled stops the extension from loading.
+# Only ours are checked: Bluefin ships Custom Command List like that (disabled).
+while read -r uuid _; do
+    dir="${EXT_DIR}/${uuid}/schemas"
+    if [[ -d "${dir}" && ! -f "${dir}/gschemas.compiled" ]]; then
+        echo "::error::${dir} has no gschemas.compiled, so GNOME can't load that extension"
+        exit 1
+    fi
+done </usr/share/ampersand/gnome-extensions.txt
 
 # Every extension must be readable by normal users and writable only by root,
 # or GNOME silently skips it.
