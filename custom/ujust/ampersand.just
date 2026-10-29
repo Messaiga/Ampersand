@@ -412,6 +412,14 @@ setup-lima:
     @just --justfile /usr/share/ublue-os/just/system.just setup-lima
 
 [private]
+setup-vms:
+    @just --justfile /usr/share/ublue-os/just/system.just setup-vms
+
+[private]
+toggle-vms:
+    @just --justfile /usr/share/ublue-os/just/system.just toggle-vms
+
+[private]
 install-jetbrains-toolbox:
     @just --justfile /usr/share/ublue-os/just/apps.just install-jetbrains-toolbox
 
