@@ -11,6 +11,7 @@ FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
 COPY custom /custom
+COPY cosign.pub /cosign.pub
 
 # Base Image
 FROM ${BASE_IMAGE}:${BASE_TAG}

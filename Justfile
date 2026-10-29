@@ -322,6 +322,11 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
 
     BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
 
+    # The ISO config names the image to install as @IMAGE@ (one config for both
+    # variants); point it at the published image of this variant.
+    variant="${target_image##*/}"
+    sed "s|@IMAGE@|ghcr.io/messaiga/${variant}:{{ default_tag }}|g" "${config}" > "${BUILDTMP}/config.toml"
+
     sudo podman run \
       --rm \
       -it \
@@ -329,13 +334,14 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       --pull=newer \
       --net=host \
       --security-opt label=type:unconfined_t \
-      -v $(pwd)/${config}:/config.toml:ro \
+      -v ${BUILDTMP}/config.toml:/config.toml:ro \
       -v $BUILDTMP:/output \
       -v /var/lib/containers/storage:/var/lib/containers/storage \
       "${bib_image}" \
       ${args} \
       "${target_image}:${tag}"
 
+    rm -f "${BUILDTMP}/config.toml"
     mkdir -p output
     sudo mv -f $BUILDTMP/* output/
     sudo rmdir $BUILDTMP

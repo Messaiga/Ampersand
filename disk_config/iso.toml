@@ -1,7 +1,9 @@
+# @IMAGE@ is filled in per variant by .github/workflows/build-disk.yml.
+# After install, the system tracks that image and only accepts signed updates.
 [customizations.installer.kickstart]
 contents = """
 %post
-bootc switch --mutate-in-place --transport registry ghcr.io/messaiga/ampersand:stable
+bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry @IMAGE@
 %end
 """
 
