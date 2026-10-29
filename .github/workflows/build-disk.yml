@@ -59,7 +59,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo podman pull "${IMAGE_REF}:${DEFAULT_TAG}"
-          ctr="$(sudo podman create "${IMAGE_REF}:${DEFAULT_TAG}")"
+          ctr="$(sudo podman create "${IMAGE_REF}:${DEFAULT_TAG}" /usr/bin/true)"
           mkdir -p "${RUNNER_TEMP}/preinstall.d"
           sudo podman cp "${ctr}:/usr/share/flatpak/preinstall.d/." "${RUNNER_TEMP}/preinstall.d/"
           sudo podman rm "${ctr}"
