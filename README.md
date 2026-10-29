@@ -5,9 +5,12 @@ An opinionated custom image of [Project Bluefin](https://projectbluefin.io), bui
 | Image | Based on |
 |---|---|
 | `ghcr.io/messaiga/ampersand:stable` | `ghcr.io/ublue-os/bluefin:stable` |
-| `ghcr.io/messaiga/ampersand-dx:stable` | `ghcr.io/ublue-os/bluefin-dx:stable` |
 
-Both are rebuilt every Wednesday (the day after Bluefin's usual stable release) and on every change to `main`.
+There is no `-dx` image (Bluefin retired theirs too): run `ujust devmode` to install the developer tools.
+`ampersand-dx` is no longer built; switch an existing install with
+`sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand:stable`, then run `ujust devmode`.
+
+It is rebuilt every Wednesday (the day after Bluefin's usual stable release) and on every change to `main`.
 
 ## Repository layout
 
@@ -18,13 +21,12 @@ Both are rebuilt every Wednesday (the day after Bluefin's usual stable release) 
 | `system_files/` | Files copied into the image as-is (`etc/`, `usr/`): GNOME defaults, configs |
 | `custom/` | Flatpak lists, Brewfiles and `ujust` recipes |
 | `disk_config/` | Installer ISO configuration |
-| `.github/workflows/` | CI: build, sign and publish both variants; build ISOs on demand |
+| `.github/workflows/` | CI: build, sign and publish the image; build ISOs on demand |
 
 ## Building locally
 
 ```bash
-just build       # ampersand
-just build-dx    # ampersand-dx
+just build
 ```
 
 ## Signing
@@ -41,12 +43,12 @@ Never commit `cosign.key` (it's in `.gitignore`). Keep a copy somewhere safe off
 
 ## Installing
 
-Installer ISOs (and qcow2 VM disks) for both variants are built on demand by the *Build disk images* workflow (Actions tab, *Run workflow*; download from the run's Artifacts). The ISO works like Bluefin's: a live desktop with the web installer, the default Flatpaks already on the ISO, and the Universal Blue Secure Boot key queued for enrolment (password `universalblue` on the blue MOK screen after the first reboot). An installed system only accepts updates signed with `cosign.pub`.
+Installer ISOs (and qcow2 VM disks) are built on demand by the *Build disk images* workflow (Actions tab, *Run workflow*; download from the run's Artifacts). The ISO works like Bluefin's: a live desktop with the web installer, the default Flatpaks already on the ISO, and the Universal Blue Secure Boot key queued for enrolment (password `universalblue` on the blue MOK screen after the first reboot). An installed system only accepts updates signed with `cosign.pub`.
 
 Switching an existing Bluefin machine (for testing) takes two steps, because Bluefin doesn't know Ampersand's key yet:
 
 ```bash
-sudo bootc switch ghcr.io/messaiga/ampersand-dx:stable          # first switch: unverified
+sudo bootc switch ghcr.io/messaiga/ampersand:stable          # first switch: unverified
 # reboot, then turn on signature checks (Ampersand ships its key):
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand-dx:stable
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand:stable
 ```

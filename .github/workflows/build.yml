@@ -23,16 +23,14 @@ jobs:
     name: Build and push ${{ matrix.image_name }}
     runs-on: ubuntu-26.04
 
-    # One job per variant, built in parallel. Both use the same Containerfile;
-    # only the upstream base image differs.
+    # One job per image (just ampersand since the -dx variant was retired;
+    # `ujust devmode` installs the developer tools instead).
     strategy:
       fail-fast: false
       matrix:
         include:
           - image_name: ampersand
             base_image: ghcr.io/ublue-os/bluefin
-          - image_name: ampersand-dx
-            base_image: ghcr.io/ublue-os/bluefin-dx
 
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ matrix.image_name }}

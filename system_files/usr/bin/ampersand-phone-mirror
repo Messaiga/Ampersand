@@ -17,7 +17,9 @@ CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/ampersand/phone.conf"
 # PING_PHRASE (the text MacroDroid listens for).
 # shellcheck source=/dev/null
 source "${CONFIG}" 2>/dev/null || {
-    notify-send -i phone "Phone mirror" "Not set up yet. Run: ujust ampersand-phone-setup"
+    # First use: offer the one-time setup in a terminal.
+    action="$(notify-send -i phone -A setup="Set up now" "Phone mirror" "Not set up yet (ujust ampersand-phone-setup)")"
+    [[ "${action}" == "setup" ]] && exec xdg-terminal-exec ujust ampersand-phone-setup
     exit 1
 }
 

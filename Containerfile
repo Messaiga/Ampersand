@@ -1,8 +1,7 @@
 # Name: ampersand
 # Ampersand: an opinionated custom image of Project Bluefin.
-# One Containerfile builds both variants; the base image is a build argument:
-#   ampersand    <- ghcr.io/ublue-os/bluefin:stable
-#   ampersand-dx <- ghcr.io/ublue-os/bluefin-dx:stable
+# Built on ghcr.io/ublue-os/bluefin:stable (the base image is a build argument).
+# There is no -dx variant: `ujust devmode` installs the developer tools.
 ARG BASE_IMAGE=ghcr.io/ublue-os/bluefin
 ARG BASE_TAG=stable
 

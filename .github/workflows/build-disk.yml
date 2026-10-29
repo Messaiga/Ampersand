@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image-name: ["ampersand", "ampersand-dx"]  # output of build.yml, keep in sync
+        image-name: ["ampersand"]  # output of build.yml, keep in sync
     permissions:
       contents: read
       packages: read
@@ -123,7 +123,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image-name: ["ampersand", "ampersand-dx"]  # output of build.yml, keep in sync
+        image-name: ["ampersand"]  # output of build.yml, keep in sync
     permissions:
       contents: read
       packages: read

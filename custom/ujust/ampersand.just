@@ -1,8 +1,110 @@
 # Ampersand recipes. Installed as /usr/share/ublue-os/just/60-custom.just,
 # which Bluefin's ujust imports after its own files. A recipe here with the same
-# name as a Bluefin one replaces it.
+# name as a Bluefin one replaces it; [private] ones still run but aren't listed.
 
-# Install Ampersand's default Flatpaks (replaces Bluefin's list; they also install automatically at boot)
+# Pick what to set up: voice typing, Tailscale, local AI, developer tools and more
+[group('Ampersand')]
+ampersand-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    STATE_DIR="${HOME}/.local/state/ampersand/setup"
+    mkdir -p "${STATE_DIR}"
+    # id | label (no commas) | ticked by default | ujust recipe that does it
+    steps=(
+        "tailscale|Tailscale: let the top-bar extension control it|on|ampersand-tailscale"
+        "speed-of-sound|Voice typing with Speed of Sound (Super then D)|on|ampersand-speed-of-sound"
+        "local-ai|Local AI assistant (downloads a ~6 GB model; Super then G)|off|ampersand-local-ai enable"
+        "devmode|Developer tools: VS Code and containers and editors|off|devmode"
+        "ai-tools|AI apps and coding agents (you pick which)|off|ampersand-ai-tools"
+        "phone|Phone Mirror (pair the phone in GSConnect first)|off|ampersand-phone-setup"
+    )
+    labels=() selected=()
+    for step in "${steps[@]}"; do
+        IFS='|' read -r id label default _ <<<"${step}"
+        if [[ -e "${STATE_DIR}/${id}" ]]; then
+            label="${label} [done]"
+        elif [[ "${default}" == on ]]; then
+            selected+=("${label}")
+        fi
+        labels+=("${label}")
+    done
+    picks="$(gum choose --no-limit --header "Set up Ampersand (space to tick, enter to start):" \
+        --selected="$(IFS=,; echo "${selected[*]}")" "${labels[@]}")" || exit 0
+    failed=()
+    for step in "${steps[@]}"; do
+        IFS='|' read -r id label _ recipe <<<"${step}"
+        grep -qF "${label}" <<<"${picks}" || continue
+        gum style --bold "==> ${label}"
+        # shellcheck disable=SC2086 # recipe may carry an argument
+        if ujust ${recipe}; then
+            touch "${STATE_DIR}/${id}"
+        else
+            failed+=("${label}")
+        fi
+    done
+    if (( ${#failed[@]} )); then
+        printf 'Not finished: %s\n' "${failed[@]}"
+        echo "Run ujust ampersand-setup again to retry."
+        exit 1
+    fi
+    echo "All set. Run ujust ampersand-setup any time to add more."
+
+# Install every developer tool: VS Code and other IDEs, containers, editors, dev apps, VS Code profiles
+[group('Ampersand')]
+devmode:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    BREWFILE=/usr/share/ampersand/devmode/devmode.Brewfile
+    echo "Developer mode installs everything in ${BREWFILE}:"
+    grep -oE '^(brew|cask|flatpak) "[^"]+"' "${BREWFILE}" | sed -E 's/^[a-z]+ "(.*\/)?([^"]+)"/  \2/' | column -c 100
+    gum confirm "Install all of it now (several GB)?" || exit 0
+    brew bundle --file="${BREWFILE}"
+
+    # Docker CLI and serial devices (dialout) need group membership; this asks for your password.
+    CURRENT_USER="$(id -un)"
+    pkexec bash -c "
+        for g in docker dialout; do
+            grep -q \"^\${g}:\" /etc/group || grep \"^\${g}:\" /usr/lib/group >>/etc/group || true
+            usermod -aG \"\${g}\" ${CURRENT_USER} || true
+        done
+    "
+
+    if pgrep -x code >/dev/null; then
+        echo "VS Code is open: close it and run ujust ampersand-vscode for the starter profiles."
+    else
+        ujust ampersand-vscode
+    fi
+    mkdir -p "${HOME}/.config/ampersand"
+    touch "${HOME}/.config/ampersand/devmode"
+    echo "Developer mode is on. Log out and back in for the group changes."
+    echo "For an Ubuntu VM (like WSL), run: ujust setup-lima"
+
+# Install AI apps and coding agents: pick from Claude Desktop, Goose, LM Studio, Jan, Claude Code, Codex and more
+[group('Ampersand')]
+ampersand-ai-tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    LIST=/usr/share/ampersand/devmode/ai-tools.Brewfile
+    # Menu entries are the lines with a "# label" comment; taps are always added.
+    mapfile -t entries < <(grep -E '^(brew|cask|flatpak) .*# ' "${LIST}")
+    labels=()
+    for entry in "${entries[@]}"; do labels+=("${entry#*# }"); done
+    picks="$(gum choose --no-limit --height 25 --header "Pick the AI tools to install (space to tick):" "${labels[@]}")" || exit 0
+    [[ -n "${picks}" ]] || { echo "Nothing picked."; exit 0; }
+    brewfile="$(mktemp --suffix=.Brewfile)"
+    trap 'rm -f "${brewfile}"' EXIT
+    grep -E '^tap ' "${LIST}" >"${brewfile}"
+    for entry in "${entries[@]}"; do
+        grep -qxF "${entry#*# }" <<<"${picks}" && echo "${entry%% #*}" >>"${brewfile}"
+    done
+    brew bundle --file="${brewfile}"
+    # Goose: start with Bluefin's config, which adds the read-only Linux diagnostics tools.
+    goose_config="${XDG_CONFIG_HOME:-${HOME}/.config}/goose/config.yaml"
+    if grep -q goose "${brewfile}" && [[ ! -e "${goose_config}" && -f /usr/share/ublue-os/goose/config.yaml ]]; then
+        install -Dm0644 /usr/share/ublue-os/goose/config.yaml "${goose_config}"
+    fi
+
+# Install the default Flatpaks now (they also install automatically at boot)
 [group('Ampersand')]
 install-system-flatpaks $confirm="1":
     #!/usr/bin/env bash
@@ -12,24 +114,53 @@ install-system-flatpaks $confirm="1":
     # Same lists flatpak-preinstall.service applies at boot (/usr/share/flatpak/preinstall.d).
     flatpak preinstall -y
 
-# Install the optional audio production apps (adds the Mixtapes remote)
+# Audio production apps (Bitwig, Reaper, Ardour...): shows what's installed, then enable or disable
 [group('Ampersand')]
-ampersand-install-audio:
-    brew bundle --file=/usr/share/ampersand/flatpaks/audio.Brewfile
+ampersand-audio action="":
+    @ujust _ampersand-bundle audio "{{ action }}"
 
-# Install the optional video and media apps
+# Video and media apps (OBS, Kdenlive, VLC...): shows what's installed, then enable or disable
 [group('Ampersand')]
-ampersand-install-media:
-    brew bundle --file=/usr/share/ampersand/flatpaks/media.Brewfile
+ampersand-media action="":
+    @ujust _ampersand-bundle media "{{ action }}"
 
-# Install the optional gaming apps
+# Gaming apps (Steam, Bottles, ProtonPlus): shows what's installed, then enable or disable
 [group('Ampersand')]
-ampersand-install-gaming:
-    brew bundle --file=/usr/share/ampersand/flatpaks/gaming.Brewfile
+ampersand-gaming action="":
+    @ujust _ampersand-bundle gaming "{{ action }}"
+
+# Shared by ampersand-audio/-media/-gaming. action: enable, disable, or empty to ask.
+[private]
+_ampersand-bundle bundle action="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    FILE="/usr/share/ampersand/flatpaks/{{ bundle }}.Brewfile"
+    mapfile -t apps < <(grep -oE '^flatpak "[^"]+"' "${FILE}" | cut -d'"' -f2)
+    installed=()
+    for app in "${apps[@]}"; do
+        if flatpak info "${app}" >/dev/null 2>&1; then installed+=("${app}"); fi
+    done
+    echo "{{ bundle }}: ${#installed[@]} of ${#apps[@]} apps installed"
+    action="{{ action }}"
+    [[ -n "${action}" ]] || action="$(gum choose Enable Disable Cancel)"
+    case "${action,,}" in
+        enable)
+            brew bundle --file="${FILE}"
+            ;;
+        disable)
+            (( ${#installed[@]} )) || { echo "Nothing to remove."; exit 0; }
+            delete=()
+            if gum confirm --default=false "Also delete these apps' settings and data?"; then delete=(--delete-data); fi
+            flatpak uninstall -y "${delete[@]}" "${installed[@]}"
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
 
 # Reset your GNOME settings, extensions and shortcuts to Ampersand's defaults
 [group('Ampersand')]
-ampersand-gnome:
+ampersand-reset:
     #!/usr/bin/env bash
     set -euo pipefail
     gum confirm "Reset the settings Ampersand sets (extensions, power, shortcuts, icons...) to its defaults?" || exit 0
@@ -50,49 +181,48 @@ ampersand-gnome:
     done
     echo "Done. Log out and back in for extension changes to take effect."
 
-# Let the Tailscale extension control Tailscale without a password prompt
-[group('Ampersand')]
+# Lets the Tailscale extension control Tailscale without a password prompt (ampersand-setup)
+[private]
 ampersand-tailscale:
     sudo tailscale set --operator="${USER}"
 
-# Switch between ampersand and ampersand-dx (takes effect after a reboot)
+# Local AI assistant (RamaLama model + Newelle, Super then G): shows its state, then enable or disable
 [group('Ampersand')]
-ampersand-switch-variant:
+ampersand-local-ai action="":
     #!/usr/bin/env bash
     set -euo pipefail
-    current="$(bootc status --format json | jq -r '.status.booted.image.image.image')"
-    case "${current}" in
-        */ampersand-dx:*) target="${current/ampersand-dx:/ampersand:}" ;;
-        */ampersand:*) target="${current/ampersand:/ampersand-dx:}" ;;
-        *) echo "Not running an Ampersand image (${current})." >&2; exit 1 ;;
-    esac
-    gum confirm "Switch to ${target}?" || exit 0
-    sudo bootc switch --enforce-container-sigpolicy "${target}"
-    echo "Reboot to start ${target##*/}."
-
-# Set up the local AI assistant: a model served by RamaLama, used by Newelle (Super then G). "undo" removes it
-[group('Ampersand')]
-ampersand-local-ai action="setup":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # "auto" = the one-time run at first login (ampersand-local-ai-firstrun.service).
-    STATE="${HOME}/.local/state/ampersand/local-ai-done"
     SERVICE=ampersand-ai
-    QUADLET_DIR="${HOME}/.config/containers/systemd"
+    QUADLET="${HOME}/.config/containers/systemd/${SERVICE}.container"
     NEWELLE=io.github.qwersyk.Newelle
     newelle_gsettings() { flatpak run --command=gsettings "${NEWELLE}" "$@"; }
-    mkdir -p "$(dirname "${STATE}")"
 
-    if [[ "{{ action }}" == "undo" ]]; then
+    model=""
+    if [[ -f "${QUADLET}" ]]; then
+        model="$(grep -oE 'hf://[^ ]+' "${QUADLET}" | head -n1 || true)"
+        state="enabled ($(systemctl --user is-active "${SERVICE}.service" 2>/dev/null || true)), model ${model##*/}"
+    else
+        state="disabled"
+    fi
+    echo "Local AI: ${state}"
+    action="{{ action }}"
+    [[ -n "${action}" ]] || action="$(gum choose Enable Disable Cancel)"
+
+    case "${action,,}" in
+    disable)
         systemctl --user stop "${SERVICE}.service" 2>/dev/null || true
-        rm -f "${QUADLET_DIR}/${SERVICE}.container"
+        rm -f "${QUADLET}"
         systemctl --user daemon-reload
         newelle_gsettings reset "${NEWELLE}" language-model 2>/dev/null || true
         newelle_gsettings reset "${NEWELLE}" llm-settings 2>/dev/null || true
-        touch "${STATE}" # so the first-login run doesn't set it up again
-        echo "Local AI removed. Downloaded models stay until you run: ramalama rm <model> (see: ramalama list)"
+        if [[ -n "${model}" ]] && gum confirm --default=false "Also delete the downloaded model (${model##*/}, several GB)?"; then
+            ramalama rm "${model}" || true
+        fi
+        echo "Local AI is off."
         exit 0
-    fi
+        ;;
+    enable) ;;
+    *) exit 0 ;;
+    esac
 
     # Pick the model by memory: 8B needs ~6 GB, 4B ~3.3 GB.
     ram_gb="$(awk '/MemTotal/ {print int($2 / 1048576)}' /proc/meminfo)"
@@ -101,40 +231,31 @@ ampersand-local-ai action="setup":
     elif (( ram_gb >= 12 )); then
         MODEL=hf://ggml-org/Qwen3-VL-4B-Instruct-GGUF
     else
-        echo "Only ${ram_gb} GB of memory: skipping local AI (needs 12 GB or more)."
-        touch "${STATE}"
-        exit 0
+        echo "Only ${ram_gb} GB of memory: local AI needs 12 GB or more." >&2
+        exit 1
     fi
-
-    if [[ "{{ action }}" != "auto" ]]; then
-        gum confirm "Download ${MODEL##*/} (several GB) and run it in the background?" || exit 0
-    fi
+    gum confirm "Download ${MODEL##*/} (several GB) and run it in the background?" || exit 0
 
     command -v ramalama >/dev/null || brew install ramalama
     ramalama pull "${MODEL}"
     # A Quadlet is a systemd unit that runs a container; RamaLama writes it for us
     # with the right GPU image. It only listens on this machine (127.0.0.1).
-    mkdir -p "${QUADLET_DIR}"
+    mkdir -p "$(dirname "${QUADLET}")"
     ramalama serve --name "${SERVICE}" --port 8080 --webui off \
-        --generate "quadlet:${QUADLET_DIR}" "${MODEL}"
+        --generate "quadlet:$(dirname "${QUADLET}")" "${MODEL}"
     systemctl --user daemon-reload
     systemctl --user start "${SERVICE}.service"
 
-    # Point Newelle at it (OpenAI-compatible API). Needs Newelle installed, which
-    # happens at boot; if it isn't there yet, the first-login run tries again next login.
-    if ! flatpak info "${NEWELLE}" >/dev/null 2>&1; then
-        echo "Newelle isn't installed yet; run this again once it is."
-        exit 0
-    fi
+    # Point Newelle at it (OpenAI-compatible API).
+    flatpak info "${NEWELLE}" >/dev/null 2>&1 || flatpak install -y flathub "${NEWELLE}"
     newelle_gsettings set "${NEWELLE}" language-model 'openai'
     newelle_gsettings set "${NEWELLE}" llm-settings \
         "{\"openai\": {\"endpoint\": \"http://127.0.0.1:8080/v1\", \"api\": \"local\", \"model\": \"${SERVICE}\"}}"
-    touch "${STATE}"
     echo "Local AI is ready: press Super, then G."
 
-# Prepare Speed of Sound for voice typing with Super then D (runs hidden at login)
-[group('Ampersand')]
-ampersand-setup-speed-of-sound:
+# Prepares Speed of Sound for voice typing with Super then D (ampersand-setup)
+[private]
+ampersand-speed-of-sound:
     #!/usr/bin/env bash
     set -euo pipefail
     APP=io.speedofsound.SpeedOfSound
@@ -191,16 +312,16 @@ ampersand-phone-setup:
     echo "    Action:  System setting > Global > adb_wifi_enabled = 1"
     echo "Done. Open 'Phone Mirror' or press Super, then K."
 
-# Create the starter VS Code profiles (General, Python, C++, Marp, Documentation) and dev container templates (ampersand-dx)
-[group('Ampersand')]
+# Creates the starter VS Code profiles and dev container templates (run by devmode)
+[private]
 ampersand-vscode:
     #!/usr/bin/env bash
     set -euo pipefail
-    SRC=/usr/share/ampersand/vscode
+    SRC=/usr/share/ampersand/devmode/vscode
     USER_DIR="${HOME}/.config/Code/User"
     STORAGE="${USER_DIR}/globalStorage/storage.json"
     if ! command -v code >/dev/null || [[ ! -d "${SRC}" ]]; then
-        echo "VS Code comes with ampersand-dx. Run: ujust ampersand-switch-variant" >&2
+        echo "VS Code isn't installed yet. Run: ujust devmode" >&2
         exit 1
     fi
     if pgrep -x code >/dev/null; then
@@ -259,3 +380,57 @@ ampersand-vscode:
     done
     echo "Done. Pick a profile in VS Code: File > New Window with Profile."
     echo "Dev container starters are in ${templates}."
+
+#-------------- Bluefin recipes Ampersand replaces or hides --------------#
+
+# Bluefin's Developer Mode picker: Ampersand's devmode installs everything instead.
+[private]
+toggle-devmode:
+    @ujust devmode
+
+# Would switch this machine to Bluefin's testing image, off Ampersand.
+[private]
+toggle-testing:
+    @echo "Not available on Ampersand: it would switch this machine to Bluefin's testing image."
+
+[private]
+bluefin-apps:
+    @ujust install-system-flatpaks
+
+# Both install Bluefin's whole AI tools list; ampersand-ai-tools lets you pick.
+[private]
+bluespeed:
+    @ujust ampersand-ai-tools
+
+[private]
+install-ai-tools:
+    @ujust ampersand-ai-tools
+
+# Hidden from the list but still work, by running Bluefin's own recipe.
+[private]
+setup-lima:
+    @just --justfile /usr/share/ublue-os/just/system.just setup-lima
+
+[private]
+setup-vms:
+    @just --justfile /usr/share/ublue-os/just/system.just setup-vms
+
+[private]
+toggle-vms:
+    @just --justfile /usr/share/ublue-os/just/system.just toggle-vms
+
+[private]
+install-jetbrains-toolbox:
+    @just --justfile /usr/share/ublue-os/just/apps.just install-jetbrains-toolbox
+
+[private]
+jetbrains-toolbox:
+    @just --justfile /usr/share/ublue-os/just/apps.just install-jetbrains-toolbox
+
+[private]
+install-opentabletdriver:
+    @just --justfile /usr/share/ublue-os/just/apps.just install-opentabletdriver
+
+[private]
+install-asus:
+    @just --justfile /usr/share/ublue-os/just/apps.just install-asus

@@ -65,9 +65,14 @@ systemctl disable flatpak-preinstall.service
 systemctl --global disable podman-auto-update.timer
 systemctl --global disable ublue-user-setup.service
 
-# Ampersand: no local-AI model download, accent watcher or voice typing in the live session.
-systemctl --global disable ampersand-local-ai-firstrun.service
-systemctl --global disable ampersand-icon-accent.service
+# Ampersand: no setup offer, accent watcher or voice typing in the live session.
+# Only units the image has: the ISO is built from the published image, which
+# can be a release behind this repo (local-ai-firstrun was replaced by setup-offer).
+for unit in ampersand-setup-offer.service ampersand-local-ai-firstrun.service ampersand-icon-accent.service; do
+    if [[ -e "/usr/lib/systemd/user/${unit}" ]]; then
+        systemctl --global disable "${unit}"
+    fi
+done
 rm -f /etc/xdg/autostart/ampersand-speedofsound.desktop
 
 # Configure Anaconda

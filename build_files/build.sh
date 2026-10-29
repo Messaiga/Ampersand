@@ -2,7 +2,7 @@
 
 set -ouex pipefail
 
-# IMAGE_NAME is passed in from the Containerfile: "ampersand" or "ampersand-dx".
+# IMAGE_NAME is passed in from the Containerfile: "ampersand".
 IMAGE_NAME="${IMAGE_NAME:-ampersand}"
 export IMAGE_NAME
 
