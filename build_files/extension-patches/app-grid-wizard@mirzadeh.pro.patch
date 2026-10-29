@@ -1,0 +1,21 @@
+# Ampersand: fixes only Accessories being filled on GNOME 50 (upstream issues #13, #15).
+# Shell.AppSystem.get_installed() returns Gio.DesktopAppInfo, which has no
+# get_app_info(), so applyFolders() threw after the first folder.
+# https://github.com/MahdiMirzadeh/app-grid-wizard/issues/15
+diff --git a/extension.js b/extension.js
+index 97cd869..271bee6 100644
+--- a/extension.js
++++ b/extension.js
+@@ -132,9 +132,9 @@ class AppFolderManager {
+         const appSystem = Shell.AppSystem.get_default();
+         const appIds = [];
+ 
+-        for (const app of appSystem.get_installed()) {
+-            const appId = app.get_id();
+-            const appInfo = app.get_app_info();
++        // get_installed() returns Gio.DesktopAppInfo objects, not Shell.App.
++        for (const appInfo of appSystem.get_installed()) {
++            const appId = appInfo.get_id();
+ 
+             if (!appId || !appInfo)
+                 continue;

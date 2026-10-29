@@ -10,7 +10,7 @@ EGO=https://extensions.gnome.org
 CURL=(curl -fsSL --retry 5 --retry-all-errors --retry-delay 5)
 
 # Tools this step needs (normally already in Bluefin).
-for tool in curl jq unzip; do
+for tool in curl jq patch unzip; do
     command -v "${tool}" >/dev/null || dnf5 -y install "${tool}"
 done
 
@@ -37,6 +37,17 @@ grep -vE '^\s*(#|$)' /ctx/gnome-extensions.txt | while read -r uuid; do
     # everything else world-writable). GNOME runs as the user, so make the
     # files readable by everyone and writable only by root.
     chmod -R u=rwX,go=rX "${EXT_DIR}/${uuid}"
+
+    # Temporary fixes for upstream bugs: extension-patches/<uuid>.patch. If a
+    # patch no longer applies (upstream changed or fixed it), the build fails:
+    # check upstream and delete the patch if it's fixed.
+    patch_file="/ctx/extension-patches/${uuid}.patch"
+    if [[ -f "${patch_file}" ]]; then
+        patch -d "${EXT_DIR}/${uuid}" -p1 --forward --no-backup-if-mismatch <"${patch_file}" || {
+            echo "::error::${patch_file##*/} no longer applies to ${uuid} v${version}; check whether upstream fixed it"
+            exit 1
+        }
+    fi
 
     # Double-check the release really lists this GNOME version.
     jq -e --arg v "${SHELL_VERSION}" '."shell-version" | index($v)' \
