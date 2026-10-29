@@ -1,6 +1,7 @@
-# Ampersand recipes. Installed as /usr/share/ublue-os/just/60-custom.just,
-# which Bluefin's ujust imports after its own files. A recipe here with the same
-# name as a Bluefin one replaces it; [private] ones still run but aren't listed.
+# Ampersand recipes. Installed as /usr/share/ublue-os/just/60-custom.just;
+# build_files/40-custom.sh makes ujust import it before Bluefin's files, so a
+# recipe here with the same name as a Bluefin one replaces it. [private] ones
+# still run but aren't listed.
 
 # Pick what to set up: voice typing, Tailscale, local AI, developer tools and more
 [group('Ampersand')]
