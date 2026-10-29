@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Starts Speed of Sound at login without a window, ready for Super then D.
+# The "stay hidden" setting lives inside the Flatpak, so set it before each start.
+set -euo pipefail
+APP=io.speedofsound.SpeedOfSound
+flatpak info "${APP}" >/dev/null 2>&1 || exit 0
+flatpak run --command=gsettings "${APP}" set "${APP}" stay-hidden-on-activation true
+exec flatpak run "${APP}"

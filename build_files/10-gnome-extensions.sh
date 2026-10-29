@@ -33,6 +33,10 @@ grep -vE '^\s*(#|$)' /ctx/gnome-extensions.txt | while read -r uuid; do
     rm -rf "${EXT_DIR:?}/${uuid}"
     unzip -q /tmp/ext.zip -d "${EXT_DIR}/${uuid}"
     rm -f /tmp/ext.zip
+    # extensions.gnome.org zips keep odd permissions (metadata.json root-only,
+    # everything else world-writable). GNOME runs as the user, so make the
+    # files readable by everyone and writable only by root.
+    chmod -R u=rwX,go=rX "${EXT_DIR}/${uuid}"
 
     # Double-check the release really lists this GNOME version.
     jq -e --arg v "${SHELL_VERSION}" '."shell-version" | index($v)' \
@@ -53,3 +57,12 @@ grep -vE '^\s*(#|$)' /ctx/gnome-extensions.txt | while read -r uuid; do
 done
 
 cat /usr/share/ampersand/gnome-extensions.txt
+
+# Every extension must be readable by normal users and writable only by root,
+# or GNOME silently skips it.
+bad="$(find "${EXT_DIR}" \( ! -perm -o=r -o -perm /go=w \) -print)"
+if [[ -n "${bad}" ]]; then
+    echo "${bad}"
+    echo "::error::files above in ${EXT_DIR} are not world-readable or are group/world-writable"
+    exit 1
+fi

@@ -41,7 +41,7 @@ Never commit `cosign.key` (it's in `.gitignore`). Keep a copy somewhere safe off
 
 ## Installing
 
-Installer ISOs (and qcow2 VM disks) for both variants are built on demand by the *Build disk images* workflow. An installed system only accepts updates signed with `cosign.pub`.
+Installer ISOs (and qcow2 VM disks) for both variants are built on demand by the *Build disk images* workflow (Actions tab, *Run workflow*; download from the run's Artifacts). The ISO works like Bluefin's: a live desktop with the web installer, the default Flatpaks already on the ISO, and the Universal Blue Secure Boot key queued for enrolment (password `universalblue` on the blue MOK screen after the first reboot). An installed system only accepts updates signed with `cosign.pub`.
 
 Switching an existing Bluefin machine (for testing) takes two steps, because Bluefin doesn't know Ampersand's key yet:
 

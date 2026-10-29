@@ -2,8 +2,8 @@
 Type=Application
 Name=Speed of Sound
 Comment=Voice typing, ready for the Super then D shortcut
-# Starts hidden once "ujust ampersand-setup-speed-of-sound" has run.
-Exec=flatpak run io.speedofsound.SpeedOfSound
+# Starts hidden (no window); open it from the dock or top bar.
+Exec=/usr/libexec/ampersand-speedofsound
 TryExec=flatpak
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
