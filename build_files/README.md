@@ -24,4 +24,6 @@ fi
 | `50-signing.sh` | Trusts Ampersand's signing key (`cosign.pub`) for `ghcr.io/messaiga` in `/etc/containers/policy.json` |
 | `90-gnome-defaults.sh` | Compiles the GNOME defaults from `system_files/` and enables the accent-folder service |
 
+Temporary fixes for upstream extension bugs live in `extension-patches/<uuid>.patch` (applied after download; the build fails once a patch stops applying, which usually means upstream changed or fixed it).
+
 The installed extension versions are recorded in `/usr/share/ampersand/gnome-extensions.txt` in the image.
