@@ -1,4 +1,5 @@
-# @IMAGE@ is filled in per variant by .github/workflows/build-disk.yml.
+# @IMAGE@ is filled in per variant by the Justfile (local "just build-iso" only;
+# the published ISO is built with Titanoboa, see iso_files/).
 # After install, the system tracks that image and only accepts signed updates.
 [customizations.installer.kickstart]
 contents = """
