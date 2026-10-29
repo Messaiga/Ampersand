@@ -13,7 +13,7 @@ if grep -q 'zz1-ampersand' /tmp/schemas.log; then
     exit 1
 fi
 
-# Rebuild the dconf system database (custom keyboard shortcuts).
+# Rebuild the dconf system database (custom keyboard shortcuts, extension settings).
 dconf update
 
 # User services for every user: folder icons follow the accent colour, and the

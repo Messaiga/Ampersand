@@ -180,6 +180,15 @@ ampersand-reset:
     for path in $(grep -o 'custom-keybindings/ampersand-[a-z-]*' /etc/dconf/db/distro.d/50-ampersand-keybindings); do
         dconf reset -f "/org/gnome/settings-daemon/plugins/media-keys/${path}/"
     done
+    # Extension settings: every key in Ampersand's dconf file.
+    path=""
+    while IFS= read -r line; do
+        case "${line}" in
+            '#'*|'') ;;
+            '['*']') path="/${line:1:-1}/" ;;
+            *=*) dconf reset "${path}${line%%=*}" ;;
+        esac
+    done < /etc/dconf/db/distro.d/51-ampersand-extensions
     echo "Done. Log out and back in for extension changes to take effect."
 
 # Lets the Tailscale extension control Tailscale without a password prompt (ampersand-setup)

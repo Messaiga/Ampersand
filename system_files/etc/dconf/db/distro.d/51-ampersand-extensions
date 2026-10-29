@@ -1,0 +1,140 @@
+# Ampersand's extension settings (Ryan's tuned setup, from `dconf dump /`).
+# Same format as `dconf dump`: to change one, set it up on a machine, run
+# `dconf dump /org/gnome/shell/extensions/<name>/`, and paste the keys here.
+# Leave out runtime state (window sizes, device names, "initialized" flags that
+# an extension sets for itself). Files here are read in order, so this one wins
+# over Bluefin's 0N-bluefin-* files. `ujust ampersand-reset` resets every key.
+
+[org/gnome/shell/extensions/simple-taskbar]
+active-panel-axis='horizontal'
+active-panel-mode='default-panel'
+clock-position='center'
+combine-app-buttons-mode='always'
+default-gnome-panel=true
+gnome-start-button-visible=false
+hide-dash-enabled=false
+hide-pinned-taskbar-apps=false
+hide-unpinned-taskbar-apps=false
+icon-size=48
+icon-spacing=6
+launch-to-desktop-enabled=false
+locations-show-downloads=false
+locations-show-network=true
+panel-axis-profiles-initialized=true
+panel-button-padding=12
+panel-height=32
+panel-mode-profiles-initialized=true
+panel-position='top'
+show-desktop-button-visible=false
+show-pinned-app-separator=true
+start-button-padding=2
+taskbar-horizontal-settings={'hide-pinned-taskbar-apps': <false>, 'activities-button-position': <'left'>, 'tray-overflow-position': <'right'>, 'panel-item-order': <['activities', 'center-box', 'tray-overflow', 'start-button', 'left-box', 'applications', 'right-box', 'folder-menu', 'system-menu', 'clock', 'show-desktop']>, 'gnome-start-button-visible': <false>, 'show-desktop-button-visible': <false>, 'target-prefs-page': <''>, 'tray-overflow-enabled': <true>, 'activities-button-visible': <true>, 'windows-start-menu-enabled': <false>, 'hide-unpinned-taskbar-apps': <false>}
+taskbar-horizontal-settings-saved=true
+taskbar-mode-settings={'hide-pinned-taskbar-apps': <false>, 'activities-button-position': <'left'>, 'tray-overflow-position': <'right'>, 'panel-item-order': <['activities', 'center-box', 'tray-overflow', 'start-button', 'left-box', 'applications', 'right-box', 'folder-menu', 'system-menu', 'clock', 'show-desktop']>, 'gnome-start-button-visible': <false>, 'show-desktop-button-visible': <false>, 'target-prefs-page': <''>, 'tray-overflow-enabled': <true>, 'activities-button-visible': <true>, 'windows-start-menu-enabled': <false>, 'hide-unpinned-taskbar-apps': <false>}
+taskbar-mode-settings-saved=true
+use-pinned-apps-as-launchers=false
+windows-10-theme-enabled=false
+windows-start-menu-enabled=false
+windows-xp-theme-enabled=false
+
+[org/gnome/shell/extensions/simple-taskbar/default-panel]
+default-panel-horizontal-settings={'launch-to-desktop-enabled': <false>, 'panel-height': <32>, 'hide-dash-enabled': <false>, 'gnome-start-button-visible': <false>, 'show-desktop-button-visible': <false>, 'panel-button-padding': <12>, 'clock-position': <'center'>, 'windows-start-menu-enabled': <false>}
+default-panel-horizontal-settings-saved=true
+
+[org/gnome/shell/extensions/simple-taskbar/dock]
+active-dock-axis='horizontal'
+dock-autohide-enabled=true
+dock-axis-profiles-initialized=true
+dock-dodge-windows-enabled=false
+dock-horizontal-settings={'dock-axis-profile-version': <uint32 1>, 'icon-size': <48>, 'use-pinned-apps-as-launchers': <false>, 'show-pinned-app-separator': <true>, 'icon-spacing': <6>, 'gnome-start-button-visible': <true>, 'combine-app-buttons-mode': <'always'>, 'start-button-padding': <2>, 'windows-start-menu-enabled': <false>}
+dock-horizontal-settings-saved=true
+dock-mode=true
+dock-mode-initialized=true
+dock-position='bottom'
+dock-show-locations=true
+dock-show-mounts=true
+
+[org/gnome/shell/extensions/tilingshell]
+cycle-layouts-backward=['<Shift>']
+edge-tiling-mode='default'
+layouts-json='[{"id":"Layout 3","tiles":[{"x":0,"y":0,"width":0.33,"height":1,"groups":[1]},{"x":0.33,"y":0,"width":0.67,"height":1,"groups":[1]}]},{"id":"Layout 4","tiles":[{"x":0,"y":0,"width":0.67,"height":1,"groups":[1]},{"x":0.67,"y":0,"width":0.33,"height":1,"groups":[1]}]},{"id":"817604","tiles":[{"x":0,"y":0,"width":1,"height":0.5208333333333334,"groups":[1]},{"x":0,"y":0.5208333333333334,"width":1,"height":0.47916666666666663,"groups":[1]}]}]'
+selected-layouts=[['Layout 3'], ['Layout 3']]
+
+[org/gnome/shell/extensions/search-light]
+animation-speed=100.0
+background-color=(0.0, 0.0, 0.0, 0.80000000000000004)
+blur-background=true
+blur-brightness=0.59999999999999998
+blur-sigma=30.0
+border-color=(0.23000000000000001, 0.23000000000000001, 0.23000000000000001, 1.0)
+border-radius=1.6499999999999999
+border-thickness=1
+entry-font-size=1
+preferred-monitor=0
+scale-height=0.14999999999999999
+scale-width=0.10000000000000001
+shortcut-search=['<Super>space']
+
+[org/gnome/shell/extensions/blur-my-shell/applications]
+blur=true
+blur-on-overview=true
+enable-all=true
+
+[org/gnome/shell/extensions/blur-my-shell/popup]
+blur=true
+pipeline='pipeline_default_rounded'
+
+[org/gnome/shell/extensions/blur-my-shell/panel]
+brightness=0.59999999999999998
+corner-radius=0
+sigma=30
+static-blur=false
+
+[org/gnome/shell/extensions/blur-my-shell/appfolder]
+brightness=0.59999999999999998
+sigma=30
+
+[org/gnome/shell/extensions/blur-my-shell/window-list]
+brightness=0.59999999999999998
+sigma=30
+
+[org/gnome/shell/extensions/Logo-menu]
+hide-forcequit=true
+menu-button-extensions-app='com.mattjakeman.ExtensionManager.desktop'
+menu-button-icon-image=1
+menu-button-icon-size=20
+menu-button-software-center='flatpak run io.github.kolunmi.Bazaar'
+menu-button-system-monitor='/usr/bin/missioncenter-helper'
+menu-button-terminal='app.devsuite.Ptyxis'
+show-activities-button=true
+show-distroshelf=true
+show-gamemode=false
+show-lockscreen=false
+show-power-option=false
+symbolic-icon=true
+use-custom-icon=false
+
+[org/gnome/shell/extensions/app-grid-wizard]
+folder-sound-video=true
+
+[org/gnome/shell/extensions/alphabetical-app-grid]
+folder-order-position='start'
+
+[org/gnome/shell/extensions/auto-accent-colour]
+highlight-mode=true
+
+[org/gnome/shell/extensions/caffeine]
+enable-mpris=true
+
+[org/gnome/shell/extensions/gtk4-ding]
+add-volumes-opposite=false
+dark-text-in-labels=false
+show-trash=false
+show-volumes=false
+
+# Quick Settings Audio Panel: merge its panel into the main Quick Settings menu.
+[org/gnome/shell/extensions/libpanel]
+layout=[['gnome@main', 'quick-settings-audio-panel@rayzeq.github.io/main']]
+
+[org/gtk/gtk4/settings/file-chooser]
+sort-directories-first=true
