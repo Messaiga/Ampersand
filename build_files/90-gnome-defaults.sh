@@ -13,6 +13,14 @@ if grep -q 'zz1-ampersand' /tmp/schemas.log; then
     exit 1
 fi
 
+# The default wallpaper comes from GNOME's backgrounds package; fail if it moves.
+for wallpaper in fold-l fold-d; do
+    test -f "/usr/share/backgrounds/gnome/${wallpaper}.jxl" || {
+        echo "::error::/usr/share/backgrounds/gnome/${wallpaper}.jxl is missing (default wallpaper)"
+        exit 1
+    }
+done
+
 # Rebuild the dconf system database (custom keyboard shortcuts, extension settings).
 dconf update
 
