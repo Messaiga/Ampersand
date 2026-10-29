@@ -6,8 +6,18 @@
 [org.gnome.shell]
 # Bluefin's list without Dash to Dock and Custom Command List, plus Ampersand's.
 enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com', 'bazaar-integration@kolunmi.github.io', 'blur-my-shell@aunetx', 'caffeine@patapon.info', 'gradia-integration@alexandervanhee.github.io', 'gsconnect@andyholmes.github.io', 'logomenu@aryan_k', 'search-light@icedman.github.com', 'AlphabeticalAppGrid@stuarthayhurst', 'app-grid-wizard@mirzadeh.pro', 'auto-accent-colour@Wartybix', 'gtk4-ding@smedius.gitlab.com', 'just-perfection-desktop@just-perfection', 'pipewire-settings@gaheldev.github.com', 'quick-settings-audio-panel@rayzeq.github.io', 'quicksettings-audio-devices-hider@marcinjahn.com', 'quicksettings-audio-devices-renamer@marcinjahn.com', 'simple-taskbar@sultech', 'tailscale-gnome@diskmth.fr', 'tilingshell@ferrarodomenico.com', 'user-accent-colors@fabito02', 'wiggly@mojarch']
-# Bluefin's pins without Thunderbird, plus Whisp and Deep Dive.
-favorite-apps=['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'io.github.kolunmi.Bazaar.desktop', 'org.gnome.Software.desktop', 'code.desktop', 'io.github.tanaybhomia.Whisp.desktop', 'io.github.tanaybhomia.DeepDive.desktop']
+# Dock pins (Ryan, 2026-10-29).
+favorite-apps=['app.zen_browser.zen.desktop', 'com.vivaldi.Vivaldi.desktop', 'org.gnome.Nautilus.desktop', 'io.github.kolunmi.Bazaar.desktop']
+
+# GNOME's "fold" wallpaper instead of Bluefin's (light and dark versions).
+[org.gnome.desktop.background]
+picture-uri='file:///usr/share/backgrounds/gnome/fold-l.jxl'
+picture-uri-dark='file:///usr/share/backgrounds/gnome/fold-d.jxl'
+picture-options='zoom'
+
+[org.gnome.desktop.screensaver]
+picture-uri='file:///usr/share/backgrounds/gnome/fold-l.jxl'
+picture-options='zoom'
 
 [org.gnome.desktop.interface]
 enable-hot-corners=false
