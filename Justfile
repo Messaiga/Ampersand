@@ -134,7 +134,6 @@ build $target_image=image_name $tag=default_tag $from_image=base_image $from_tag
 
     podman build "${PODMAN_BUILD_ARGS[@]}" .
 
-
 # Split the image for smaller updates (New)!
 rechunk $target_image=image_name $tag=default_tag:
     #!/usr/bin/env bash
