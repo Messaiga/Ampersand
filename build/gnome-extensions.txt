@@ -1,0 +1,32 @@
+# GNOME Shell extensions Ampersand installs from extensions.gnome.org.
+# One UUID per line. The build picks the newest release that supports the
+# base image's GNOME Shell version, and fails if an extension has none.
+# Which ones are enabled by default: see zz1-ampersand.gschema.override.
+#
+# The first block came with Bluefin's image before Ampersand moved to
+# Silverblue + Common (2026-10-30); Bluefin builds them from git submodules,
+# Ampersand takes the extensions.gnome.org release instead.
+appindicatorsupport@rgcjonas.gmail.com
+bazaar-integration@kolunmi.github.io
+blur-my-shell@aunetx
+caffeine@patapon.info
+gradia-integration@alexandervanhee.github.io
+gsconnect@andyholmes.github.io
+logomenu@aryan_k
+search-light@icedman.github.com
+
+# Ampersand's own picks (spec/03).
+AlphabeticalAppGrid@stuarthayhurst
+app-grid-wizard@mirzadeh.pro
+auto-accent-colour@Wartybix
+gtk4-ding@smedius.gitlab.com
+just-perfection-desktop@just-perfection
+pipewire-settings@gaheldev.github.com
+quick-settings-audio-panel@rayzeq.github.io
+quicksettings-audio-devices-hider@marcinjahn.com
+quicksettings-audio-devices-renamer@marcinjahn.com
+simple-taskbar@sultech
+tailscale-gnome@diskmth.fr
+tilingshell@ferrarodomenico.com
+user-accent-colors@fabito02
+wiggly@mojarch

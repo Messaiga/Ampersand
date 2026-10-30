@@ -16,7 +16,7 @@ on:
       - 'containers/marp-export/**'
       - '.github/workflows/build-marp-export.yml'
   schedule:
-    - cron: '05 10 * * 3'  # weekly, with the OS images (picks up Debian security updates)
+    - cron: '05 10 * * 3'  # weekly (picks up Debian security updates)
   workflow_dispatch:
 
 env:

@@ -1,22 +1,34 @@
 ---
 name: Build disk images
 
-# Builds the installer ISO and a VM disk (qcow2) from the published :stable images.
-# Run it from the Actions tab after a new image is out; download from the run's
+# Ampersand addition (not in Finpilot): builds the Titanoboa live installer ISO
+# and a VM disk (qcow2) from a published image. Finpilot's `just build-iso`
+# (bootc-image-builder, iso/iso.toml) still works locally; this ISO adds the web
+# installer and puts the Flatpaks on the ISO (spec/02 "Install path").
+# Run it from the Actions tab and pick the tag; download from the run's
 # Artifacts. Pull requests that touch these files build both, to check they still work.
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to build from"
+        type: choice
+        options:
+          - stable
+          - stable-testing
+        default: stable
   pull_request:
     branches:
       - main
     paths:
-      - 'iso_files/**'
+      - 'iso/titanoboa/**'
       - '.github/workflows/build-disk.yml'
 
 env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
-  DEFAULT_TAG: "stable"
+  # Pull requests check against :stable-testing, the newest build of main.
+  DEFAULT_TAG: ${{ inputs.tag || 'stable-testing' }}
   # Titanoboa (Universal Blue's live-ISO builder), pinned to the commit Bluefin uses.
   TITANOBOA_COMMIT: "840217d97bd0bc9a52466508c54d8dda5c5ba2fd"
 
@@ -32,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image-name: ["ampersand"]  # output of build.yml, keep in sync
+        image-name: ["ampersand"]  # output of build-image.yml, keep in sync
     permissions:
       contents: read
       packages: read
@@ -54,7 +66,7 @@ jobs:
           echo "IMAGE_REF=${IMAGE_REGISTRY,,}/${{ matrix.image-name }}" >> "${GITHUB_ENV}"
 
       # The live ISO carries the same Flatpaks a new install would download at
-      # first boot (Bluefin's and ours), read from the image's preinstall.d.
+      # first boot, read from the image's preinstall.d.
       - name: List the Flatpaks to put on the ISO
         run: |
           set -euo pipefail
@@ -64,7 +76,7 @@ jobs:
           sudo podman cp "${ctr}:/usr/share/flatpak/preinstall.d/." "${RUNNER_TEMP}/preinstall.d/"
           sudo podman rm "${ctr}"
           sudo chown -R "$(id -u):$(id -g)" "${RUNNER_TEMP}/preinstall.d"
-          iso_files/flatpak-list.sh "${RUNNER_TEMP}"/preinstall.d/*.preinstall | tee "${RUNNER_TEMP}/flatpaks.txt"
+          iso/titanoboa/flatpak-list.sh "${RUNNER_TEMP}"/preinstall.d/*.preinstall | tee "${RUNNER_TEMP}/flatpaks.txt"
           echo "FLATPAKS_LIST=${RUNNER_TEMP}/flatpaks.txt" >> "${GITHUB_ENV}"
 
       # The hook makes the live system an installer; tell it which image to install.
@@ -74,7 +86,7 @@ jobs:
           {
             echo "AMPERSAND_IMAGE_REF=${IMAGE_REF}"
             echo "AMPERSAND_IMAGE_TAG=${DEFAULT_TAG}"
-            cat iso_files/configure_iso.sh
+            cat iso/titanoboa/configure_iso.sh
           } > "${RUNNER_TEMP}/hook.sh"
           echo "HOOK_POST_ROOTFS=${RUNNER_TEMP}/hook.sh" >> "${GITHUB_ENV}"
 
@@ -123,7 +135,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image-name: ["ampersand"]  # output of build.yml, keep in sync
+        image-name: ["ampersand"]  # output of build-image.yml, keep in sync
     permissions:
       contents: read
       packages: read
@@ -141,7 +153,7 @@ jobs:
         with:
           image_type: qcow2
           bootc_ref: ${{ env.IMAGE_REF }}
-          # Bluefin images don't declare a default filesystem; Bluefin installs on btrfs.
+          # Silverblue images don't declare a default filesystem; install on btrfs like Bluefin.
           bootc_default_fs: btrfs
 
       - name: Upload qcow2

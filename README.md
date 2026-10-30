@@ -1,54 +1,138 @@
 # Ampersand
 
-An opinionated custom image of [Project Bluefin](https://projectbluefin.io), built with [bootc](https://github.com/bootc-dev/bootc) from the [Universal Blue image template](https://github.com/ublue-os/image-template).
+Ryan's opinionated GNOME desktop: a [bootc](https://github.com/bootc-dev/bootc)
+image built the way Bluefin itself is built, from
+[projectbluefin/finpilot](https://github.com/projectbluefin/finpilot). The base
+is Fedora Silverblue 44 (GNOME 50), plus the shared layer from
+[`projectbluefin/common`](https://github.com/projectbluefin/common) (ujust,
+first-boot setup, update tooling), Homebrew from
+[`ublue-os/brew`](https://github.com/ublue-os/brew), and Ampersand's own files.
 
-| Image | Based on |
-|---|---|
-| `ghcr.io/messaiga/ampersand:stable` | `ghcr.io/ublue-os/bluefin:stable` |
+It is built to be driven by hand or by an agent: `AGENTS.md` and the skills in
+`.agents/skills/` are the procedures (Claude Code reads them through `CLAUDE.md`
+and `.claude/skills`).
 
-There is no `-dx` image (Bluefin retired theirs too): run `ujust devmode` to install the developer tools.
-`ampersand-dx` is no longer built; switch an existing install with
-`sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand:stable`, then run `ujust devmode`.
+## What Makes this Raptor Different?
 
-It is rebuilt every Wednesday (the day after Bluefin's usual stable release) and on every change to `main`.
+Ampersand is based on Fedora Silverblue + Common's shared layer, like
+Finpilot. It does not use Common's `bluefin/` layer, so Bluefin's own defaults
+are not inherited; the ones Ampersand wants are spelled out here.
 
-## Repository layout
+### Added Packages (Build-time)
 
-| Path | What goes there |
-|---|---|
-| `Containerfile` | Picks the base image and runs the build scripts |
-| `build_files/` | Build-time scripts (install packages, extensions): anything that needs a command |
-| `system_files/` | Files copied into the image as-is (`etc/`, `usr/`): GNOME defaults, configs |
-| `custom/` | Flatpak lists, Brewfiles and `ujust` recipes |
-| `disk_config/` | Installer ISO configuration |
-| `.github/workflows/` | CI: build, sign and publish the image; build ISOs on demand |
+- `adw-gtk3-theme`, `keyd` (COPR `alternateved/keyd`), `tailscale`
+- GNOME Shell extensions from extensions.gnome.org (`build/gnome-extensions.txt`):
+  the set Bluefin enabled (AppIndicator, Bazaar Integration, Blur my Shell,
+  Caffeine, Gradia, GSConnect, Logo Menu, Search Light) and Ampersand's own
+  (Simple Taskbar, Tiling Shell, Just Perfection, Auto Accent Colour, ChromaLeon,
+  audio panel extensions, …)
+- Hatter and MoreWaita icon themes
 
-## Building locally
+### Added Applications (Runtime)
+
+- **GUI apps (Flatpak)**: `custom/flatpaks/ampersand.preinstall`, Bazaar included
+- **App suites (Homebrew + Flatpak)**, each a pick list with a recommended set:
+  `ujust devmode`, `ai-tools`, `gaming-apps`, `audio-apps`, `media-apps`
+
+### Removed or Disabled
+
+- The RPMs Bluefin also removes from Silverblue: Firefox (it's a Flatpak here),
+  GNOME Software (Bazaar replaces it), `podman-docker`, Yelp, … (`build/25-ampersand-packages.sh`)
+
+### Configuration Changes
+
+- GNOME defaults and extension settings (`custom/files/`): taskbar instead of
+  dock, light theme with accent colour from the wallpaper, Super+key app
+  shortcuts with a one-shot Super key (keyd), no idle blank or AC suspend
+- `ujust setup-desktop` (offered at first login), `toggle-local-ai`,
+  `setup-phone`, `reset-desktop`
+- Updates only accept images signed with this repository's key
+
+_Last updated: 2026-10-30_
+
+## Releases
+
+| Branch   | Image tag         | Audience                       |
+| -------- | ----------------- | ------------------------------ |
+| `main`   | `:stable-testing` | The test VM                    |
+| `stable` | `:stable`         | The ThinkPad                   |
+
+Merging to `main` publishes `ghcr.io/messaiga/ampersand:stable-testing`; the
+promotion PR that follows publishes the same digest as `:stable` when merged.
+Promotion verifies the keyless cosign signature on the testing image before it
+reports ready, and refuses to promote once `main` has moved past the commit the
+promotion PR was built from.
+
+> **Known gap:** the promotion gate checks the digest and the signature only. It
+> runs no end-to-end tests, so `release/ready` means "signed and unmodified",
+> not "functionally validated". Test `:stable-testing` in the VM first.
+
+Renovate keeps the Silverblue, Common and Brew digests and the actions current.
+A Fedora major bump (Silverblue 45 / GNOME 51) is a deliberate `FROM` change.
+
+## Image signing
+
+Ampersand deviates from Finpilot here. Every image is signed twice:
+
+- **keyless** (GitHub OIDC), as Finpilot does, which the promotion gate checks;
+- **with this repository's cosign key** (`SIGNING_SECRET` secret, public half in
+  `cosign.pub`), which is **verified on the device**: `build/44-ampersand.sh`
+  merges a `sigstoreSigned` scope for `ghcr.io/messaiga` into Common's
+  `/etc/containers/policy.json`, `custom/files/etc/containers/registries.d/`
+  makes clients fetch the signatures, and `image-info.json` uses the
+  `ostree-image-signed:` transport. `bootc upgrade` refuses an image this key
+  didn't sign. `tests/contract/image-signing_test.bats` holds the pieces together.
 
 ```bash
-just build
+cosign verify --key cosign.pub ghcr.io/messaiga/ampersand:stable
 ```
 
-## Signing
-
-Every published image is signed with [cosign](https://github.com/sigstore/cosign). One-time setup, on your own machine, in this repo:
-
-```bash
-COSIGN_PASSWORD="" cosign generate-key-pair
-gh secret set SIGNING_SECRET < cosign.key   # private key -> GitHub secret
-git add cosign.pub                          # public key -> commit it
-```
-
-Never commit `cosign.key` (it's in `.gitignore`). Keep a copy somewhere safe offline.
+The key pair was made once with `COSIGN_PASSWORD="" cosign generate-key-pair`;
+`cosign.key` went into the `SIGNING_SECRET` secret and is kept offline. Never
+commit it.
 
 ## Installing
 
-Installer ISOs (and qcow2 VM disks) are built on demand by the *Build disk images* workflow (Actions tab, *Run workflow*; download from the run's Artifacts). The ISO works like Bluefin's: a live desktop with the web installer, the default Flatpaks already on the ISO, and the Universal Blue Secure Boot key queued for enrolment (password `universalblue` on the blue MOK screen after the first reboot). An installed system only accepts updates signed with `cosign.pub`.
+The installer ISO (and a qcow2 VM disk) comes from the **Build disk images**
+workflow: Actions tab → Run workflow → pick `stable` or `stable-testing`, then
+download from the run's Artifacts. It is a Titanoboa live ISO like Bluefin's: a
+live desktop with the web installer and the default Flatpaks on the ISO. There
+is no Secure Boot key to enrol: Ampersand runs Fedora's signed kernel.
+Finpilot's own `just build-iso` (bootc-image-builder) still works locally.
 
-Switching an existing Bluefin machine (for testing) takes two steps, because Bluefin doesn't know Ampersand's key yet:
+Switching a machine that already runs Ampersand (it trusts the key already):
 
 ```bash
-sudo bootc switch ghcr.io/messaiga/ampersand:stable          # first switch: unverified
-# reboot, then turn on signature checks (Ampersand ships its key):
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand:stable
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/messaiga/ampersand:stable-testing
+sudo systemctl reboot
 ```
+
+From any other image, switch once without `--enforce-container-sigpolicy`, then
+again with it after the reboot. Then, as your user: `ujust setup-desktop`.
+
+First boot unpacks Homebrew and installs the declared Flatpaks; both need a
+network connection. Check them with `systemctl status brew-setup.service` and
+`systemctl status flatpak-preinstall.service`.
+
+## Local testing
+
+```bash
+just build            # build the container image
+just build-qcow2      # build a QCOW2 disk image
+just run-vm-qcow2     # boot it in a VM
+just lint             # shellcheck
+just check            # Justfile syntax
+just test-unit        # the bats suite
+```
+
+## Troubleshooting
+
+[The `troubleshooting` skill](.agents/skills/troubleshooting/SKILL.md) covers
+build, CI, and runtime failures symptom-first; `research/gotchas.md` logs where
+a tool behaved differently from what we expected.
+
+## Learn more
+
+- [Finpilot](https://github.com/projectbluefin/finpilot), the template this follows
+- [Project Bluefin contributing guide](https://docs.projectbluefin.io/contributing/)
+- [bootc](https://containers.github.io/bootc/)
