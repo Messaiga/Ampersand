@@ -52,6 +52,7 @@ the README's Troubleshooting section.
 | An extension shows ERROR in Extensions | a `schemas/` folder without `gschemas.compiled`, or files not world-readable | `40-gnome-extensions.sh` removes `schemas/` and fixes permissions; see `research/gotchas.md` |
 | Ampersand's GNOME defaults don't apply | dconf profile lacks `system-db:distro`, or the user already changed the key | `43-gnome-defaults.sh` writes the profile; on an existing account run `ujust reset-desktop` |
 | `bootc upgrade` refuses the image | signature missing or policy scope wrong | `cosign verify --key cosign.pub <image>`; check the "Sign with the Ampersand key" step ran |
+| Build fails `/ctx/build/NN-*.sh: Permission denied` (exit 126) | the phase script was committed 100644 (renaming a `.example` keeps its mode) | `git update-index --chmod=+x build/NN-*.sh`; `tests/contract/build-phases_test.bats` checks every phase |
 
 ## Capturing what you learned
 
