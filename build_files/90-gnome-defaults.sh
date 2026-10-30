@@ -25,5 +25,5 @@ done
 dconf update
 
 # User services for every user: folder icons follow the accent colour, and the
-# one-time offer to run ujust ampersand-setup at first login.
+# one-time offer to run ujust setup-desktop at first login.
 systemctl --global enable ampersand-icon-accent.service ampersand-setup-offer.service

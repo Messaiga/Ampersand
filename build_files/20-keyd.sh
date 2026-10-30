@@ -1,5 +1,5 @@
 #!/bin/bash
-# keyd: key remapping daemon for the Super leader key (config: /etc/keyd/default.conf).
+# keyd: key remapping daemon for the hold-Super one-shot shortcut key (config: /etc/keyd/default.conf).
 # Not in Fedora yet (review bug 2467653); use the COPR named in keyd's README
 # and switch to the Fedora package once it lands.
 

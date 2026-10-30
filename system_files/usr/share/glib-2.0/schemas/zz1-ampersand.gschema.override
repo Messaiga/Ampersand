@@ -1,6 +1,6 @@
 # Ampersand's GNOME defaults. Loaded after Bluefin's zz0-bluefin-modifications,
 # so a key set here replaces Bluefin's value. Only defaults: anything a user has
-# changed keeps their value (`ujust ampersand-reset` resets to these).
+# changed keeps their value (`ujust reset-desktop` resets to these).
 # Custom keyboard shortcuts live in /etc/dconf/db/distro.d/50-ampersand-keybindings.
 
 [org.gnome.shell]
@@ -38,12 +38,21 @@ idle-dim=false
 [org.gnome.desktop.session]
 idle-delay=uint32 0
 
-# Leader key (keyd sends Ctrl+Alt+Super+letter): built-in launchers.
+# App shortcuts (spec/03): Super+E Files, Super+C Calculator, Super+Q close.
+# The rest (Super+T/N/D/G/F) are custom entries; Super+Space is Search Light.
 [org.gnome.settings-daemon.plugins.media-keys]
-www=['<Control><Alt><Super>b']
-calculator=['<Control><Alt><Super>c']
-control-center=['<Control><Alt><Super>i']
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-phone/']
+home=['<Super>e']
+calculator=['<Super>c']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle/']
+
+# Super+D was Bluefin's show desktop; it is dictation now.
+[org.gnome.desktop.wm.keybindings]
+close=['<Alt>F4', '<Super>q']
+show-desktop=[]
+
+# Super+N was GNOME's "focus the active notification"; it opens Whisp now.
+[org.gnome.shell.keybindings]
+focus-active-notification=[]
 
 #-------------- Extensions --------------#
 

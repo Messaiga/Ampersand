@@ -5,7 +5,7 @@
 #      on the phone sees it and turns Wireless Debugging on.
 #   2. Find the phone's adb port on the network (mDNS) and connect.
 #   3. Run scrcpy. When it closes, turn Wireless Debugging off again.
-# One-time setup: ujust ampersand-phone-setup (writes the config below).
+# One-time setup: ujust setup-phone (writes the config below).
 
 set -euo pipefail
 
@@ -18,8 +18,8 @@ CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/ampersand/phone.conf"
 # shellcheck source=/dev/null
 source "${CONFIG}" 2>/dev/null || {
     # First use: offer the one-time setup in a terminal.
-    action="$(notify-send -i phone -A setup="Set up now" "Phone mirror" "Not set up yet (ujust ampersand-phone-setup)")"
-    [[ "${action}" == "setup" ]] && exec xdg-terminal-exec ujust ampersand-phone-setup
+    action="$(notify-send -i phone -A setup="Set up now" "Phone mirror" "Not set up yet (ujust setup-phone)")"
+    [[ "${action}" == "setup" ]] && exec xdg-terminal-exec ujust setup-phone
     exit 1
 }
 

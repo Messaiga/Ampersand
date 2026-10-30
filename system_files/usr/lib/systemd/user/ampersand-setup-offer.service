@@ -1,5 +1,5 @@
 [Unit]
-Description=Offer Ampersand's setup once at first login (ujust ampersand-setup)
+Description=Offer Ampersand's setup once at first login (ujust setup-desktop)
 After=graphical-session.target
 # Not for the login screen's own session (GDM runs as a system user).
 ConditionUser=!@system
