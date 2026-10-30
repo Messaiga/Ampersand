@@ -181,19 +181,24 @@ _suite suite title after="":
 _devmode-after:
     #!/usr/bin/env bash
     set -euo pipefail
-    # Docker CLI and serial devices (dialout) need group membership; this asks for your password.
-    groups=()
-    if command -v docker >/dev/null && ! id -nG | grep -qw docker; then groups+=(docker); fi
-    if ! id -nG | grep -qw dialout; then groups+=(dialout); fi
-    if (( ${#groups[@]} )); then
-        CURRENT_USER="$(id -un)"
+    # Serial devices (Arduino, USB-serial) need the dialout group; this asks for your password.
+    if ! id -nG | grep -qw dialout; then
         pkexec bash -c "
-            for g in ${groups[*]}; do
-                grep -q \"^\${g}:\" /etc/group || grep \"^\${g}:\" /usr/lib/group >>/etc/group || true
-                usermod -aG \"\${g}\" ${CURRENT_USER} || true
-            done
+            grep -q '^dialout:' /etc/group || grep '^dialout:' /usr/lib/group >>/etc/group
+            usermod -aG dialout $(id -un)
         "
-        echo "Log out and back in for the group changes (${groups[*]})."
+        echo "Log out and back in to use serial devices (dialout group)."
+    fi
+    # There is no Docker daemon (or docker group): the Docker CLI talks to
+    # Podman's Docker-compatible socket, for your user only.
+    if command -v docker >/dev/null; then
+        systemctl --user enable --now podman.socket
+        env_file="${XDG_CONFIG_HOME:-${HOME}/.config}/environment.d/50-ampersand-docker.conf"
+        if [[ ! -e "${env_file}" ]]; then
+            mkdir -p "$(dirname "${env_file}")"
+            echo "DOCKER_HOST=unix://${XDG_RUNTIME_DIR}/podman/podman.sock" >"${env_file}"
+            echo "Log out and back in so docker uses Podman (DOCKER_HOST is in ${env_file})."
+        fi
     fi
     if command -v code >/dev/null; then
         if pgrep -x code >/dev/null; then
@@ -397,6 +402,8 @@ devmode-vscode:
 
     # VS Code has no command to create an empty profile, so add any missing ones
     # to its profile list. Each profile lives in User/profiles/<random id>/.
+    # VS Code reads this list at start-up (a plain location is relative to
+    # User/profiles), so it works before VS Code has ever been opened.
     mkdir -p "$(dirname "${STORAGE}")"
     [[ -s "${STORAGE}" ]] || echo '{}' > "${STORAGE}"
     cp "${STORAGE}" "${STORAGE}.bak"
@@ -419,12 +426,11 @@ devmode-vscode:
         mkdir -p "${profile_dir}"
 
         # Starter settings and tasks. Never overwrites a file you've changed.
-        if [[ ! -e "${profile_dir}/settings.json" ]]; then
-            # Bluefin's defaults (font etc.), then this profile's own settings.
-            jq -s '.[0] * .[1]' /etc/skel/.config/Code/User/settings.json \
-                <(cat "${dir}settings.json" 2>/dev/null || echo '{}') > "${profile_dir}/settings.json"
+        # An empty file counts as missing (an earlier failed run may have left one).
+        if [[ -f "${dir}settings.json" && ! -s "${profile_dir}/settings.json" ]]; then
+            cp "${dir}settings.json" "${profile_dir}/settings.json"
         fi
-        if [[ -f "${dir}tasks.json" && ! -e "${profile_dir}/tasks.json" ]]; then
+        if [[ -f "${dir}tasks.json" && ! -s "${profile_dir}/tasks.json" ]]; then
             cp "${dir}tasks.json" "${profile_dir}/tasks.json"
         fi
 
