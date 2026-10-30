@@ -5,10 +5,16 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-json
+        # VS Code settings and dev containers are JSONC (comments allowed).
+        exclude: '^custom/vscode/'
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
+        exclude: '\.patch$'
       - id: trailing-whitespace
+        # A blank context line in a unified diff is a single space; trimming it
+        # breaks the patch.
+        exclude: '\.patch$'
 
   # Brewfile validation has exactly one implementation: build/validate-brewfiles.sh.
   # This hook must stay a caller of that script and must never hand a repository

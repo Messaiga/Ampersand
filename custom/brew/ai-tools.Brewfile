@@ -1,9 +1,9 @@
 # ujust ai-tools: AI apps and coding agents (see README.md for the format).
 # Bluefin's AI tools list plus Claude Desktop. Newelle (the local assistant) is
 # a default app; ujust toggle-local-ai sets up its local model.
-tap "anomalyco/tap"
-tap "charmbracelet/tap"
-tap "llmmanorg/tap"
+tap "anomalyco/tap", trusted: true
+tap "charmbracelet/tap", trusted: true
+tap "llmmanorg/tap", trusted: true
 tap "ublue-os/tap", trusted: true
 tap "ublue-os/experimental-tap", trusted: true
 
