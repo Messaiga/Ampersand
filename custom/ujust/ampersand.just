@@ -1,23 +1,23 @@
-# Ampersand recipes. Installed as /usr/share/ublue-os/just/60-custom.just;
-# build_files/40-custom.sh makes ujust import it before Bluefin's files, so a
-# recipe here with the same name as a Bluefin one replaces it. [private] ones
-# still run but aren't listed.
+# Ampersand recipes, listed under System with Bluefin's own. Installed as
+# /usr/share/ublue-os/just/60-custom.just; build_files/40-custom.sh makes ujust
+# import it before Bluefin's files, so a recipe here with the same name as a
+# Bluefin one replaces it. [private] ones still run but aren't listed.
 
 # Pick what to set up: voice typing, Tailscale, local AI, developer tools and more
-[group('Ampersand')]
-ampersand-setup:
+[group('System')]
+setup-desktop:
     #!/usr/bin/env bash
     set -euo pipefail
     STATE_DIR="${HOME}/.local/state/ampersand/setup"
     mkdir -p "${STATE_DIR}"
     # id | label (no commas) | ticked by default | ujust recipe that does it
     steps=(
-        "tailscale|Tailscale: let the top-bar extension control it|on|ampersand-tailscale"
-        "speed-of-sound|Voice typing with Speed of Sound (Super then D)|on|ampersand-speed-of-sound"
-        "local-ai|Local AI assistant (downloads a ~6 GB model; Super then G)|off|ampersand-local-ai enable"
+        "tailscale|Tailscale: let the top-bar extension control it|on|_tailscale-operator"
+        "speed-of-sound|Voice typing with Speed of Sound (Super+D)|on|_speed-of-sound"
+        "local-ai|Local AI assistant (downloads a ~6 GB model; Super+G)|off|toggle-local-ai enable"
         "devmode|Developer tools: VS Code and containers and editors|off|devmode"
-        "ai-tools|AI apps and coding agents (you pick which)|off|ampersand-ai-tools"
-        "phone|Phone Mirror (pair the phone in GSConnect first)|off|ampersand-phone-setup"
+        "ai-tools|AI apps and coding agents|off|ai-tools"
+        "phone|Phone Mirror (pair the phone in GSConnect first)|off|setup-phone"
     )
     labels=() selected=()
     for step in "${steps[@]}"; do
@@ -45,68 +45,38 @@ ampersand-setup:
     done
     if (( ${#failed[@]} )); then
         printf 'Not finished: %s\n' "${failed[@]}"
-        echo "Run ujust ampersand-setup again to retry."
+        echo "Run ujust setup-desktop again to retry."
         exit 1
     fi
-    echo "All set. Run ujust ampersand-setup any time to add more."
+    echo "All set. Run ujust setup-desktop any time to add more."
 
-# Install every developer tool: VS Code and other IDEs, containers, editors, dev apps, VS Code profiles
-[group('Ampersand')]
+# Developer tools (VS Code, containers, editors, dev apps): install a recommended set, or change what's installed
+[group('System')]
 devmode:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    BREWFILE=/usr/share/ampersand/devmode/devmode.Brewfile
-    echo "Developer mode installs everything in ${BREWFILE}:"
-    grep -oE '^(brew|cask|flatpak) "[^"]+"' "${BREWFILE}" | sed -E 's/^[a-z]+ "(.*\/)?([^"]+)"/  \2/' | column -c 100
-    gum confirm "Install all of it now (several GB)?" || exit 0
-    brew bundle --file="${BREWFILE}"
+    @ujust _suite devmode "Developer tools" _devmode-after
 
-    # Docker CLI and serial devices (dialout) need group membership; this asks for your password.
-    CURRENT_USER="$(id -un)"
-    pkexec bash -c "
-        for g in docker dialout; do
-            grep -q \"^\${g}:\" /etc/group || grep \"^\${g}:\" /usr/lib/group >>/etc/group || true
-            usermod -aG \"\${g}\" ${CURRENT_USER} || true
-        done
-    "
+# AI apps and coding agents (Claude, Goose, Antigravity and more): install a recommended set, or change what's installed
+[group('System')]
+ai-tools:
+    @ujust _suite ai-tools "AI tools" _ai-tools-after
 
-    if pgrep -x code >/dev/null; then
-        echo "VS Code is open: close it and run ujust ampersand-vscode for the starter profiles."
-    else
-        ujust ampersand-vscode
-    fi
-    mkdir -p "${HOME}/.config/ampersand"
-    touch "${HOME}/.config/ampersand/devmode"
-    echo "Developer mode is on. Log out and back in for the group changes."
-    echo "For an Ubuntu VM (like WSL), run: ujust setup-lima"
+# Gaming apps (Steam, Bottles, Lutris, ProtonPlus): install a recommended set, or change what's installed
+[group('System')]
+gaming-apps:
+    @ujust _suite gaming "Gaming apps"
 
-# Install AI apps and coding agents: pick from Claude Desktop, Goose, LM Studio, Jan, Claude Code, Codex and more
-[group('Ampersand')]
-ampersand-ai-tools:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    LIST=/usr/share/ampersand/devmode/ai-tools.Brewfile
-    # Menu entries are the lines with a "# label" comment; taps are always added.
-    mapfile -t entries < <(grep -E '^(brew|cask|flatpak) .*# ' "${LIST}")
-    labels=()
-    for entry in "${entries[@]}"; do labels+=("${entry#*# }"); done
-    picks="$(gum choose --no-limit --height 25 --header "Pick the AI tools to install (space to tick):" "${labels[@]}")" || exit 0
-    [[ -n "${picks}" ]] || { echo "Nothing picked."; exit 0; }
-    brewfile="$(mktemp --suffix=.Brewfile)"
-    trap 'rm -f "${brewfile}"' EXIT
-    grep -E '^tap ' "${LIST}" >"${brewfile}"
-    for entry in "${entries[@]}"; do
-        grep -qxF "${entry#*# }" <<<"${picks}" && echo "${entry%% #*}" >>"${brewfile}"
-    done
-    brew bundle --file="${brewfile}"
-    # Goose: start with Bluefin's config, which adds the read-only Linux diagnostics tools.
-    goose_config="${XDG_CONFIG_HOME:-${HOME}/.config}/goose/config.yaml"
-    if grep -q goose "${brewfile}" && [[ ! -e "${goose_config}" && -f /usr/share/ublue-os/goose/config.yaml ]]; then
-        install -Dm0644 /usr/share/ublue-os/goose/config.yaml "${goose_config}"
-    fi
+# Audio production apps (Ardour, LMMS, MuseScore and more): install a recommended set, or change what's installed
+[group('System')]
+audio-apps:
+    @ujust _suite audio "Audio apps"
+
+# Video and media apps (OBS, Kdenlive, VLC and more): install a recommended set, or change what's installed
+[group('System')]
+media-apps:
+    @ujust _suite media "Media apps"
 
 # Install the default Flatpaks now (they also install automatically at boot)
-[group('Ampersand')]
+[group('System')]
 install-system-flatpaks $confirm="1":
     #!/usr/bin/env bash
     if [ "$confirm" != 0 ] ; then
@@ -115,53 +85,139 @@ install-system-flatpaks $confirm="1":
     # Same lists flatpak-preinstall.service applies at boot (/usr/share/flatpak/preinstall.d).
     flatpak preinstall -y
 
-# Audio production apps (Bitwig, Reaper, Ardour...): shows what's installed, then enable or disable
-[group('Ampersand')]
-ampersand-audio action="":
-    @ujust _ampersand-bundle audio "{{ action }}"
-
-# Video and media apps (OBS, Kdenlive, VLC...): shows what's installed, then enable or disable
-[group('Ampersand')]
-ampersand-media action="":
-    @ujust _ampersand-bundle media "{{ action }}"
-
-# Gaming apps (Steam, Bottles, ProtonPlus): shows what's installed, then enable or disable
-[group('Ampersand')]
-ampersand-gaming action="":
-    @ujust _ampersand-bundle gaming "{{ action }}"
-
-# Shared by ampersand-audio/-media/-gaming. action: enable, disable, or empty to ask.
+# Shared by the app suites above. The list is custom/suites/<suite>.Brewfile:
+# lines with a "# Name: description" comment are the menu, "(recommended)"
+# marks the default set. after: a recipe to run when something was installed.
 [private]
-_ampersand-bundle bundle action="":
+_suite suite title after="":
     #!/usr/bin/env bash
     set -euo pipefail
-    FILE="/usr/share/ampersand/flatpaks/{{ bundle }}.Brewfile"
-    mapfile -t apps < <(grep -oE '^flatpak "[^"]+"' "${FILE}" | cut -d'"' -f2)
-    installed=()
-    for app in "${apps[@]}"; do
-        if flatpak info "${app}" >/dev/null 2>&1; then installed+=("${app}"); fi
+    LIST="/usr/share/ampersand/suites/{{ suite }}.Brewfile"
+    brews="$(brew list --formula -1 2>/dev/null || true)"
+    casks="$(brew list --cask -1 2>/dev/null || true)"
+    flatpaks="$(flatpak list --app --columns=application 2>/dev/null || true)"
+    declare -A entry_of=()
+    labels=() recommended=() installed=()
+    while IFS= read -r entry; do
+        label="${entry#*# }"
+        label="${label% (recommended)}"
+        entry_of["${label}"]="${entry%% #*}"
+        labels+=("${label}")
+        if [[ "${entry}" == *"(recommended)" ]]; then recommended+=("${label}"); fi
+        id="$(cut -d'"' -f2 <<<"${entry}")"
+        case "${entry%% *}" in
+            brew) have="${brews}" ;;
+            cask) have="${casks}" ;;
+            *) have="${flatpaks}" ;;
+        esac
+        if grep -qxF "${id##*/}" <<<"${have}"; then installed+=("${label}"); fi
+    done < <(grep -E '^(brew|cask|flatpak) .*# ' "${LIST}")
+    pick() { # pick <header> <preselected...>
+        local header="$1"; shift
+        gum choose --no-limit --height 25 --header "${header}" \
+            --selected="$(IFS=,; echo "$*")" "${labels[@]}"
+    }
+
+    if (( ${#installed[@]} == 0 )); then
+        echo "{{ title }}: none installed. The recommended set is:"
+        printf '  %s\n' "${recommended[@]}"
+        case "$(gum choose "Install the recommended set" "Let me pick" "No")" in
+            Install*) picks="$(printf '%s\n' "${recommended[@]}")" ;;
+            Let*) picks="$(pick "Pick the {{ title }} to install (space to tick):" "${recommended[@]}")" || exit 0 ;;
+            *) exit 0 ;;
+        esac
+    else
+        echo "{{ title }}: installed now:"
+        printf '  %s\n' "${installed[@]}"
+        case "$(gum choose "Change the selection" "Remove everything" "No")" in
+            Change*) picks="$(pick "Tick what you want; untick to remove:" "${installed[@]}")" || exit 0 ;;
+            Remove*) picks="" ;;
+            *) exit 0 ;;
+        esac
+    fi
+
+    add=() remove=()
+    for label in "${labels[@]}"; do
+        wanted=0 has=0
+        if grep -qxF "${label}" <<<"${picks}"; then wanted=1; fi
+        if printf '%s\n' "${installed[@]}" | grep -qxF "${label}"; then has=1; fi
+        if (( wanted && ! has )); then add+=("${label}"); fi
+        if (( has && ! wanted )); then remove+=("${label}"); fi
     done
-    echo "{{ bundle }}: ${#installed[@]} of ${#apps[@]} apps installed"
-    action="{{ action }}"
-    [[ -n "${action}" ]] || action="$(gum choose Enable Disable Cancel)"
-    case "${action,,}" in
-        enable)
-            brew bundle --file="${FILE}"
-            ;;
-        disable)
-            (( ${#installed[@]} )) || { echo "Nothing to remove."; exit 0; }
+    if (( ! ${#add[@]} && ! ${#remove[@]} )); then echo "Nothing to change."; exit 0; fi
+    if (( ${#add[@]} )); then echo "Install:"; printf '  %s\n' "${add[@]}"; fi
+    if (( ${#remove[@]} )); then echo "Remove:"; printf '  %s\n' "${remove[@]}"; fi
+    gum confirm "Go ahead?" || exit 0
+
+    if (( ${#remove[@]} )); then
+        apps=()
+        for label in "${remove[@]}"; do
+            line="${entry_of[${label}]}"
+            id="$(cut -d'"' -f2 <<<"${line}")"
+            case "${line%% *}" in
+                brew) brew uninstall "${id##*/}" ;;
+                cask) brew uninstall --cask "${id##*/}" ;;
+                *) apps+=("${id}") ;;
+            esac
+        done
+        if (( ${#apps[@]} )); then
             delete=()
             if gum confirm --default=false "Also delete these apps' settings and data?"; then delete=(--delete-data); fi
-            flatpak uninstall -y "${delete[@]}" "${installed[@]}"
-            ;;
-        *)
-            exit 0
-            ;;
-    esac
+            flatpak uninstall -y "${delete[@]}" "${apps[@]}"
+        fi
+    fi
+    if (( ${#add[@]} )); then
+        brewfile="$(mktemp --suffix=.Brewfile)"
+        trap 'rm -f "${brewfile}"' EXIT
+        grep -E '^tap ' "${LIST}" >"${brewfile}" || true
+        for label in "${add[@]}"; do echo "${entry_of[${label}]}" >>"${brewfile}"; done
+        brew bundle --file="${brewfile}"
+        if [[ -n "{{ after }}" ]]; then ujust "{{ after }}"; fi
+    fi
+    echo "Done. Run this again any time to change the {{ title }}."
+
+# devmode, after installing: group membership and the VS Code starter profiles.
+[private]
+_devmode-after:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Docker CLI and serial devices (dialout) need group membership; this asks for your password.
+    groups=()
+    if command -v docker >/dev/null && ! id -nG | grep -qw docker; then groups+=(docker); fi
+    if ! id -nG | grep -qw dialout; then groups+=(dialout); fi
+    if (( ${#groups[@]} )); then
+        CURRENT_USER="$(id -un)"
+        pkexec bash -c "
+            for g in ${groups[*]}; do
+                grep -q \"^\${g}:\" /etc/group || grep \"^\${g}:\" /usr/lib/group >>/etc/group || true
+                usermod -aG \"\${g}\" ${CURRENT_USER} || true
+            done
+        "
+        echo "Log out and back in for the group changes (${groups[*]})."
+    fi
+    if command -v code >/dev/null; then
+        if pgrep -x code >/dev/null; then
+            echo "VS Code is open: close it and run ujust devmode-vscode for the starter profiles."
+        else
+            ujust devmode-vscode
+        fi
+    fi
+    echo "For an Ubuntu VM (like WSL), run: ujust setup-lima"
+
+# ai-tools, after installing: Goose starts with Bluefin's config, which adds the
+# read-only Linux diagnostics tools.
+[private]
+_ai-tools-after:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    goose_config="${XDG_CONFIG_HOME:-${HOME}/.config}/goose/config.yaml"
+    if brew list -1 2>/dev/null | grep -q goose && [[ ! -e "${goose_config}" && -f /usr/share/ublue-os/goose/config.yaml ]]; then
+        install -Dm0644 /usr/share/ublue-os/goose/config.yaml "${goose_config}"
+    fi
 
 # Reset your GNOME settings, extensions and shortcuts to Ampersand's defaults
-[group('Ampersand')]
-ampersand-reset:
+[group('System')]
+reset-desktop:
     #!/usr/bin/env bash
     set -euo pipefail
     gum confirm "Reset the settings Ampersand sets (extensions, power, shortcuts, icons...) to its defaults?" || exit 0
@@ -191,14 +247,14 @@ ampersand-reset:
     done < /etc/dconf/db/distro.d/51-ampersand-extensions
     echo "Done. Log out and back in for extension changes to take effect."
 
-# Lets the Tailscale extension control Tailscale without a password prompt (ampersand-setup)
+# Lets the Tailscale extension control Tailscale without a password prompt (setup-desktop)
 [private]
-ampersand-tailscale:
+_tailscale-operator:
     sudo tailscale set --operator="${USER}"
 
-# Local AI assistant (RamaLama model + Newelle, Super then G): shows its state, then enable or disable
-[group('Ampersand')]
-ampersand-local-ai action="":
+# Local AI assistant (RamaLama model + Newelle, Super+G): shows its state, then enable or disable
+[group('System')]
+toggle-local-ai action="":
     #!/usr/bin/env bash
     set -euo pipefail
     SERVICE=ampersand-ai
@@ -261,26 +317,26 @@ ampersand-local-ai action="":
     newelle_gsettings set "${NEWELLE}" language-model 'openai'
     newelle_gsettings set "${NEWELLE}" llm-settings \
         "{\"openai\": {\"endpoint\": \"http://127.0.0.1:8080/v1\", \"api\": \"local\", \"model\": \"${SERVICE}\"}}"
-    echo "Local AI is ready: press Super, then G."
+    echo "Local AI is ready: press Super+G."
 
-# Prepares Speed of Sound for voice typing with Super then D (ampersand-setup)
+# Prepares Speed of Sound for voice typing with Super+D (setup-desktop)
 [private]
-ampersand-speed-of-sound:
+_speed-of-sound:
     #!/usr/bin/env bash
     set -euo pipefail
     APP=io.speedofsound.SpeedOfSound
     flatpak info "${APP}" >/dev/null 2>&1 || flatpak install -y flathub "${APP}"
-    # Start without a window at login; Super then D triggers it over D-Bus.
+    # Start without a window at login; Super+D triggers it over D-Bus.
     flatpak run --command=gsettings "${APP}" set "${APP}" stay-hidden-on-activation true
     echo "Speed of Sound will open now. On first run:"
     echo "  1. Click 'Allow remote interaction' so it can type into other apps."
     echo "  2. Pick and download a voice model in Preferences."
-    echo "Then close it; it starts hidden at every login. Press Super, then D to dictate."
+    echo "Then close it; it starts hidden at every login. Press Super+D to dictate."
     flatpak run "${APP}" &
 
 # One-time setup for Phone Mirror: pair with your phone and set up the MacroDroid trigger
-[group('Ampersand')]
-ampersand-phone-setup:
+[group('System')]
+setup-phone:
     #!/usr/bin/env bash
     set -euo pipefail
     CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/ampersand/phone.conf"
@@ -320,14 +376,14 @@ ampersand-phone-setup:
     echo "4/4 In MacroDroid, create a macro:"
     echo "    Trigger: Notification received, app 'KDE Connect', text contains: ${phrase}"
     echo "    Action:  System setting > Global > adb_wifi_enabled = 1"
-    echo "Done. Open 'Phone Mirror' or press Super, then K."
+    echo "Done. Open Phone Mirror from the app grid."
 
 # Creates the starter VS Code profiles and dev container templates (run by devmode)
 [private]
-ampersand-vscode:
+devmode-vscode:
     #!/usr/bin/env bash
     set -euo pipefail
-    SRC=/usr/share/ampersand/devmode/vscode
+    SRC=/usr/share/ampersand/vscode
     USER_DIR="${HOME}/.config/Code/User"
     STORAGE="${USER_DIR}/globalStorage/storage.json"
     if ! command -v code >/dev/null || [[ ! -d "${SRC}" ]]; then
@@ -393,7 +449,7 @@ ampersand-vscode:
 
 #-------------- Bluefin recipes Ampersand replaces or hides --------------#
 
-# Bluefin's Developer Mode picker: Ampersand's devmode installs everything instead.
+# Bluefin's Developer Mode switch (rebases to -dx): Ampersand's devmode installs apps instead.
 [private]
 toggle-devmode:
     @ujust devmode
@@ -407,14 +463,14 @@ toggle-testing:
 bluefin-apps:
     @ujust install-system-flatpaks
 
-# Both install Bluefin's whole AI tools list; ampersand-ai-tools lets you pick.
+# Both install Bluefin's whole AI tools list; ai-tools lets you pick.
 [private]
 bluespeed:
-    @ujust ampersand-ai-tools
+    @ujust ai-tools
 
 [private]
 install-ai-tools:
-    @ujust ampersand-ai-tools
+    @ujust ai-tools
 
 # Hidden from the list but still work, by running Bluefin's own recipe.
 [private]

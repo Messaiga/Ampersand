@@ -3,7 +3,7 @@
 # `dconf dump /org/gnome/shell/extensions/<name>/`, and paste the keys here.
 # Leave out runtime state (window sizes, device names, "initialized" flags that
 # an extension sets for itself). Files here are read in order, so this one wins
-# over Bluefin's 0N-bluefin-* files. `ujust ampersand-reset` resets every key.
+# over Bluefin's 0N-bluefin-* files. `ujust reset-desktop` resets every key.
 
 [org/gnome/shell/extensions/simple-taskbar]
 active-panel-axis='horizontal'

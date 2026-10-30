@@ -1,34 +1,29 @@
-# Ampersand leader-key shortcuts (keyd turns "Super, then letter" into
-# Ctrl+Alt+Super+letter). Bluefin's custom0-2 are kept; the shortcut list itself
-# is in zz1-ampersand.gschema.override. Browser, Calculator and Settings use
-# GNOME's built-in launcher keys there instead of a custom entry.
+# Ampersand's app shortcuts (spec/03 "Keyboard shortcuts"). Bluefin's custom0-2
+# are kept; the shortcut list itself is in zz1-ampersand.gschema.override, which
+# also sets Super+E (Files), Super+C (Calculator) and Super+Q (close) with
+# GNOME's built-in keys and frees Super+N and Super+D.
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal]
-binding='<Control><Alt><Super>t'
+binding='<Super>t'
 command='xdg-terminal-exec'
-name='Terminal (leader T)'
+name='Terminal'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp]
-binding='<Control><Alt><Super>w'
+binding='<Super>n'
 command='flatpak run io.github.tanaybhomia.Whisp'
-name='Whisp (leader W)'
+name='Whisp'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive]
-binding='<Control><Alt><Super>f'
+binding='<Super>f'
 command='flatpak run io.github.tanaybhomia.DeepDive'
-name='Deep Dive (leader F)'
+name='Deep Dive'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation]
-binding='<Control><Alt><Super>d'
+binding='<Super>d'
 command='gdbus call --session --dest io.speedofsound.SpeedOfSound --object-path /io/speedofsound/SpeedOfSound --method org.gtk.Actions.Activate trigger [] {}'
-name='Speed of Sound: start/stop dictation (leader D)'
+name='Speed of Sound: start/stop dictation'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle]
-binding='<Control><Alt><Super>g'
+binding='<Super>g'
 command='flatpak run io.github.qwersyk.Newelle'
-name='Newelle assistant (leader G)'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-phone]
-binding='<Control><Alt><Super>k'
-command='ampersand-phone-mirror'
-name='Phone mirror (leader K)'
+name='Newelle assistant'

@@ -6,13 +6,16 @@ set -ouex pipefail
 # Default Flatpaks: installed at boot by flatpak-preinstall.service.
 install -Dm0644 /ctx/custom/flatpaks/ampersand.preinstall /usr/share/flatpak/preinstall.d/ampersand.preinstall
 
-# Optional Flatpak bundles, toggled by ujust ampersand-audio / -media / -gaming.
-install -Dm0644 -t /usr/share/ampersand/flatpaks /ctx/custom/flatpaks/*.Brewfile
-
-# Developer tools (ujust devmode), the AI tools picker (ujust ampersand-ai-tools),
-# and the starter VS Code profiles and dev containers.
+# App suites (ujust devmode, ai-tools, gaming-apps, audio-apps, media-apps) and
+# the starter VS Code profiles and dev containers (devmode).
+install -Dm0644 -t /usr/share/ampersand/suites /ctx/custom/suites/*.Brewfile
 mkdir -p /usr/share/ampersand
-cp -r /ctx/custom/devmode /usr/share/ampersand/devmode
+cp -r /ctx/custom/vscode /usr/share/ampersand/vscode
+# The suite menu passes labels to gum as a comma-separated list.
+if grep -nE '^(brew|cask|flatpak) .*# .*,' /ctx/custom/suites/*.Brewfile; then
+    echo "::error::a suite label above has a comma; gum can't preselect it"
+    exit 1
+fi
 
 # ujust recipes. Bluefin's ujust imports this file name for local additions.
 install -Dm0644 /ctx/custom/ujust/ampersand.just /usr/share/ublue-os/just/60-custom.just
