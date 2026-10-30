@@ -45,7 +45,7 @@ fi
 #
 # Ampersand deviates from Finpilot here (README "Image signing"): CI also signs
 # every image with the cosign key in the SIGNING_SECRET secret, and
-# 10-overlay.sh merges a sigstoreSigned scope for ghcr.io/messaiga, naming that
+# 44-ampersand.sh merges a sigstoreSigned scope for ghcr.io/messaiga, naming that
 # key, into Common's policy. Without that scope this namespace would fall
 # through to Common's `""` catch-all (insecureAcceptAnything) and the signed
 # transport would check nothing. tests/contract/image-signing_test.bats keeps
