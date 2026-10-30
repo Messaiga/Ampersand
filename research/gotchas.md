@@ -2,10 +2,10 @@
 
 One line per mismatch between what we assumed and what a tool actually does.
 Format: `YYYY-MM-DD · tool · assumed → actual · source`. Newest at the bottom.
-How to check tools: `research/upstream-check/SKILL.md`.
+How to check tools: `.agents/skills/upstream-check/SKILL.md`.
 
-- 2026-10-30 · Bluefin docs · "Bluefin" docs page = our base → our base `bluefin:stable` is **Bluefin Classic** (/classic/); /dakota/ is another image · https://docs.projectbluefin.io/classic/
-- 2026-10-30 · just · a recipe defined twice across imports errors or the last wins → at the same import depth the **earlier** import wins (upstream calls it a bug, kept for compatibility); `40-custom.sh` relies on this · https://just.systems/man/en/imports.html
+- 2026-10-30 · Bluefin docs · (superseded the same day: the base is now Silverblue + Common) "Bluefin" docs page = our base → our base `bluefin:stable` is **Bluefin Classic** (/classic/); /dakota/ is another image · https://docs.projectbluefin.io/classic/
+- 2026-10-30 · just · a recipe defined twice across imports errors or the last wins → at the same import depth the **earlier** import wins (upstream calls it a bug, kept for compatibility); `build/44-ampersand.sh` relies on this · https://just.systems/man/en/imports.html
 - 2026-10-30 · VS Code · `--profile <name>` fails on a missing profile → it silently creates an empty one, so a typo goes unnoticed · https://code.visualstudio.com/docs/configure/command-line
 - 2026-10-30 · gum · README documents `choose` flags → `--selected` isn't in the README; check `gum choose --help` in the image · https://github.com/charmbracelet/gum
 - 2026-10-30 · Flatpak · removing a preinstall entry only stops new installs → `flatpak preinstall` syncs (installs and removes); removal on deletion is implied, not stated, so test in the VM · https://man7.org/linux/man-pages/man1/flatpak-preinstall.1.html
@@ -14,3 +14,10 @@ How to check tools: `research/upstream-check/SKILL.md`.
 - 2026-10-30 · RamaLama · default port is always 8080 → 8080 if free, else another port (README says 8081–8090, man page says up to 8180); pass `--port` · https://github.com/containers/ramalama/blob/main/docs/ramalama-serve.1.md
 - 2026-10-30 · adb · spec/03 uses `adb mdns services` → Android's docs show `adb mdns track-services`; confirm with `adb --help` in the image (assumed until tested) · https://developer.android.com/tools/adb#wireless-adb-android-11
 - 2026-10-30 · containers-policy · any `signedIdentity` works with cosign → cosign signatures carry only the repository, so only `matchRepository`/`exactRepository` work · https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md
+- 2026-10-30 · Finpilot · Finpilot builds on Bluefin → it builds on `silverblue:44` + Common's `shared/` layer only; Bluefin's extensions, dconf, Flatpak list, recipes and Bazaar are not in it · https://github.com/projectbluefin/finpilot/blob/main/build/10-overlay.sh
+- 2026-10-30 · Claude Code · Finpilot's skills work in Claude Code as shipped → Claude Code discovers `.claude/skills/` and reads `CLAUDE.md`, not `.agents/skills/` or `AGENTS.md`; Ampersand adds a symlink and `CLAUDE.md` (`@AGENTS.md`) · https://code.claude.com/docs/en/agent-sdk/skills
+- 2026-10-30 · Finpilot CI · PRs build the image → `build-image.yml` builds on push to `main` only; a PR's first image is the next `:stable-testing` · finpilot `.github/workflows/build-image.yml`
+- 2026-10-30 · dconf · `/etc/dconf/db/distro.d` is read everywhere → only if `/etc/dconf/profile/user` lists `system-db:distro`; Bluefin's image shipped that profile, Common doesn't (Silverblue: assumed absent, `43-gnome-defaults.sh` writes it if missing) · common `docs/skills/dconf-consistency.md`
+- 2026-10-30 · Bluefin extensions · AppIndicator, Blur my Shell, Caffeine, GSConnect, Logo Menu, Search Light, Bazaar/Gradia integration come from EGO → Bluefin builds them from git submodules; Ampersand now takes the EGO release (assumed every one is on EGO for GNOME 50 until the first build passes; Logo Menu's helper scripts are not installed to /usr/bin as Bluefin does) · ublue-os/bluefin `build_files/shared/build-gnome-extensions.sh`
+- 2026-10-30 · Homebrew · `brew bundle` loads formulae from any tapped repo → third-party taps now need `trusted: true` on the `tap` line (or `brew trust`), else "Refusing to load formula … from untrusted tap". Trusting a tap makes brew evaluate *every* formula in it, so one broken file fails the tap (charmbracelet/tap's tone.rb, so Crush is out for now); Common's own ai-tools list has the same untrusted taps · validate CI on PR #19
+- 2026-10-30 · pre-commit · Finpilot's hooks fit all our files → `check-json` rejects VS Code's JSONC and `trailing-whitespace` breaks unified-diff patches (blank context lines are one space); both are excluded for those paths · validate CI on PR #19

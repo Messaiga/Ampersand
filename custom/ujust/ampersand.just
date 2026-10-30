@@ -1,7 +1,8 @@
-# Ampersand recipes, listed under System with Bluefin's own. Installed as
-# /usr/share/ublue-os/just/60-custom.just; build_files/40-custom.sh makes ujust
-# import it before Bluefin's files, so a recipe here with the same name as a
-# Bluefin one replaces it. [private] ones still run but aren't listed.
+# Ampersand recipes, listed under System with Common's shared ones. Finpilot's
+# 10-overlay.sh merges custom/ujust/*.just into
+# /usr/share/ublue-os/just/60-custom.just; build/44-ampersand.sh makes ujust
+# import it before Common's files, so a recipe here with the same name as a
+# Common one replaces it. [private] ones still run but aren't listed.
 
 # Pick what to set up: voice typing, Tailscale, local AI, developer tools and more
 [group('System')]
@@ -75,24 +76,14 @@ audio-apps:
 media-apps:
     @ujust _suite media "Media apps"
 
-# Install the default Flatpaks now (they also install automatically at boot)
-[group('System')]
-install-system-flatpaks $confirm="1":
-    #!/usr/bin/env bash
-    if [ "$confirm" != 0 ] ; then
-        gum confirm "Install Ampersand's default Flatpaks?" || exit 0
-    fi
-    # Same lists flatpak-preinstall.service applies at boot (/usr/share/flatpak/preinstall.d).
-    flatpak preinstall -y
-
-# Shared by the app suites above. The list is custom/suites/<suite>.Brewfile:
+# Shared by the app suites above. The list is custom/brew/<suite>.Brewfile:
 # lines with a "# Name: description" comment are the menu, "(recommended)"
 # marks the default set. after: a recipe to run when something was installed.
 [private]
 _suite suite title after="":
     #!/usr/bin/env bash
     set -euo pipefail
-    LIST="/usr/share/ampersand/suites/{{ suite }}.Brewfile"
+    LIST="/usr/share/ublue-os/homebrew/{{ suite }}.Brewfile"
     brews="$(brew list --formula -1 2>/dev/null || true)"
     casks="$(brew list --cask -1 2>/dev/null || true)"
     flatpaks="$(flatpak list --app --columns=application 2>/dev/null || true)"
@@ -209,7 +200,7 @@ _devmode-after:
     fi
     echo "For an Ubuntu VM (like WSL), run: ujust setup-lima"
 
-# ai-tools, after installing: Goose starts with Bluefin's config, which adds the
+# ai-tools, after installing: Goose starts with Common's config, which adds the
 # read-only Linux diagnostics tools.
 [private]
 _ai-tools-after:
@@ -250,6 +241,8 @@ reset-desktop:
             *=*) dconf reset "${path}${line%%=*}" ;;
         esac
     done < /etc/dconf/db/distro.d/51-ampersand-extensions
+    # Per-user defaults the image seeds into new accounts (custom/config).
+    ujust install-config
     echo "Done. Log out and back in for extension changes to take effect."
 
 # Lets the Tailscale extension control Tailscale without a password prompt (setup-desktop)
@@ -453,44 +446,14 @@ devmode-vscode:
     echo "Done. Pick a profile in VS Code: File > New Window with Profile."
     echo "Dev container starters are in ${templates}."
 
-#-------------- Bluefin recipes Ampersand replaces or hides --------------#
+#-------------- Common recipes Ampersand replaces or hides --------------#
 
-# Bluefin's Developer Mode switch (rebases to -dx): Ampersand's devmode installs apps instead.
-[private]
-toggle-devmode:
-    @ujust devmode
-
-# Would switch this machine to Bluefin's testing image, off Ampersand.
-[private]
-toggle-testing:
-    @echo "Not available on Ampersand: it would switch this machine to Bluefin's testing image."
-
-[private]
-bluefin-apps:
-    @ujust install-system-flatpaks
-
-# Both install Bluefin's whole AI tools list; ai-tools lets you pick.
-[private]
-bluespeed:
-    @ujust ai-tools
-
+# Both install Common's whole AI tools list; ai-tools lets you pick.
 [private]
 install-ai-tools:
     @ujust ai-tools
 
-# Hidden from the list but still work, by running Bluefin's own recipe.
-[private]
-setup-lima:
-    @just --justfile /usr/share/ublue-os/just/system.just setup-lima
-
-[private]
-setup-vms:
-    @just --justfile /usr/share/ublue-os/just/system.just setup-vms
-
-[private]
-toggle-vms:
-    @just --justfile /usr/share/ublue-os/just/system.just toggle-vms
-
+# Hidden from the list but still work, by running Common's own recipe.
 [private]
 install-jetbrains-toolbox:
     @just --justfile /usr/share/ublue-os/just/apps.just install-jetbrains-toolbox
@@ -506,3 +469,7 @@ install-opentabletdriver:
 [private]
 install-asus:
     @just --justfile /usr/share/ublue-os/just/apps.just install-asus
+
+[private]
+cncf:
+    @just --justfile /usr/share/ublue-os/just/apps.just cncf

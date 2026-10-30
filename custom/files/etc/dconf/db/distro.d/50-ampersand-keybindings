@@ -1,0 +1,45 @@
+# Ampersand's app shortcuts (spec/03 "Keyboard shortcuts"). The shortcut list
+# itself is in zz1-ampersand.gschema.override, which also sets Super+E (Files),
+# Super+C (Calculator) and Super+Q (close) with GNOME's built-in keys and frees
+# Super+N and Super+D. The first three are the ones Bluefin's image used to set
+# (its 02-bluefin-keybindings, no longer inherited since the move to Silverblue).
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal-ctrl-alt-t]
+binding='<Control><Alt>t'
+command='xdg-terminal-exec'
+name='Terminal'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal-ctrl-alt-return]
+binding='<Control><Alt>Return'
+command='xdg-terminal-exec'
+name='Terminal Alt'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-mission-center]
+binding='<Control><Shift>Escape'
+command='flatpak run io.missioncenter.MissionCenter'
+name='Mission Center'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal]
+binding='<Super>t'
+command='xdg-terminal-exec'
+name='Terminal'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp]
+binding='<Super>n'
+command='flatpak run io.github.tanaybhomia.Whisp'
+name='Whisp'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive]
+binding='<Super>f'
+command='flatpak run io.github.tanaybhomia.DeepDive'
+name='Deep Dive'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation]
+binding='<Super>d'
+command='gdbus call --session --dest io.speedofsound.SpeedOfSound --object-path /io/speedofsound/SpeedOfSound --method org.gtk.Actions.Activate trigger [] {}'
+name='Speed of Sound: start/stop dictation'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle]
+binding='<Super>g'
+command='flatpak run io.github.qwersyk.Newelle'
+name='Newelle assistant'

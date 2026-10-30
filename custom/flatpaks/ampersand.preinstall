@@ -1,8 +1,15 @@
 # Ampersand default Flatpaks, installed automatically at boot by
-# flatpak-preinstall.service (Flatpak's own mechanism; Bluefin uses it for Bazaar).
+# flatpak-preinstall.service (Flatpak's own mechanism), and put on the Titanoboa
+# ISO by .github/workflows/build-disk.yml. This is the whole list: since the move
+# to Silverblue + Common no Bluefin list is inherited (spec/04).
 # An app the user uninstalls is not reinstalled. Careful: removing an entry
 # here UNINSTALLS that app from every machine on its next boot.
 # Source of truth for the choices: spec/04 and notes/wishlist.md.
+
+# The app store. Came from Bluefin's bazaar.preinstall before 2026-10-30.
+[Flatpak Preinstall io.github.kolunmi.Bazaar]
+Branch=stable
+IsRuntime=false
 
 [Flatpak Preinstall be.alexandervanhee.gradia]
 Branch=stable

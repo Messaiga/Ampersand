@@ -1,0 +1,21 @@
+# Ampersand: archives open in Files (Nautilus extracts them), not File Roller.
+# gnome-mimeapps.list takes priority over a plain mimeapps.list in this folder.
+[Default Applications]
+application/zip=org.gnome.Nautilus.desktop
+application/x-7z-compressed=org.gnome.Nautilus.desktop
+application/x-7z-compressed-tar=org.gnome.Nautilus.desktop
+application/vnd.rar=org.gnome.Nautilus.desktop
+application/x-rar=org.gnome.Nautilus.desktop
+application/x-rar-compressed=org.gnome.Nautilus.desktop
+application/x-tar=org.gnome.Nautilus.desktop
+application/x-compressed-tar=org.gnome.Nautilus.desktop
+application/x-bzip2-compressed-tar=org.gnome.Nautilus.desktop
+application/x-xz-compressed-tar=org.gnome.Nautilus.desktop
+application/x-zstd-compressed-tar=org.gnome.Nautilus.desktop
+application/x-lzma-compressed-tar=org.gnome.Nautilus.desktop
+application/gzip=org.gnome.Nautilus.desktop
+application/x-bzip2=org.gnome.Nautilus.desktop
+application/x-xz=org.gnome.Nautilus.desktop
+application/zstd=org.gnome.Nautilus.desktop
+application/x-cpio=org.gnome.Nautilus.desktop
+application/x-iso9660-image=org.gnome.Nautilus.desktop

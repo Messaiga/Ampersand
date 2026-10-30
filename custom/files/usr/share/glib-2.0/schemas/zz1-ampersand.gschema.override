@@ -1,0 +1,67 @@
+# Ampersand's GNOME defaults (over GNOME's own; there is no Bluefin layer since
+# the move to Silverblue + Common). Only defaults: anything a user has
+# changed keeps their value (`ujust reset-desktop` resets to these).
+# Custom keyboard shortcuts live in /etc/dconf/db/distro.d/50-ampersand-keybindings.
+
+[org.gnome.shell]
+# The extensions Bluefin's image enabled (minus Dash to Dock and Custom Command
+# List), plus Ampersand's. All installed by build/40-gnome-extensions.sh.
+enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com', 'bazaar-integration@kolunmi.github.io', 'blur-my-shell@aunetx', 'caffeine@patapon.info', 'gradia-integration@alexandervanhee.github.io', 'gsconnect@andyholmes.github.io', 'logomenu@aryan_k', 'search-light@icedman.github.com', 'AlphabeticalAppGrid@stuarthayhurst', 'app-grid-wizard@mirzadeh.pro', 'auto-accent-colour@Wartybix', 'gtk4-ding@smedius.gitlab.com', 'just-perfection-desktop@just-perfection', 'pipewire-settings@gaheldev.github.com', 'quick-settings-audio-panel@rayzeq.github.io', 'quicksettings-audio-devices-hider@marcinjahn.com', 'quicksettings-audio-devices-renamer@marcinjahn.com', 'simple-taskbar@sultech', 'tailscale-gnome@diskmth.fr', 'tilingshell@ferrarodomenico.com', 'user-accent-colors@fabito02', 'wiggly@mojarch']
+# Dock pins (Ryan, 2026-10-29).
+favorite-apps=['app.zen_browser.zen.desktop', 'com.vivaldi.Vivaldi.desktop', 'org.gnome.Nautilus.desktop', 'io.github.kolunmi.Bazaar.desktop']
+
+# GNOME's "fold" wallpaper (light and dark versions).
+[org.gnome.desktop.background]
+picture-uri='file:///usr/share/backgrounds/gnome/fold-l.jxl'
+picture-uri-dark='file:///usr/share/backgrounds/gnome/fold-d.jxl'
+picture-options='zoom'
+
+[org.gnome.desktop.screensaver]
+picture-uri='file:///usr/share/backgrounds/gnome/fold-l.jxl'
+picture-options='zoom'
+
+[org.gnome.desktop.interface]
+enable-hot-corners=false
+color-scheme='default'
+icon-theme='Hatter-Slate'
+
+[org.gnome.desktop.sound]
+allow-volume-above-100-percent=false
+
+[org.gnome.mutter]
+workspaces-only-on-primary=true
+
+# Never suspend on AC power, never dim or blank the screen (so no idle lock either).
+[org.gnome.settings-daemon.plugins.power]
+sleep-inactive-ac-type='nothing'
+idle-dim=false
+
+[org.gnome.desktop.session]
+idle-delay=uint32 0
+
+# App shortcuts (spec/03): Super+E Files, Super+C Calculator, Super+Q close.
+# The rest (Super+T/N/D/G/F) are custom entries; Super+Space is Search Light.
+[org.gnome.settings-daemon.plugins.media-keys]
+home=['<Super>e']
+calculator=['<Super>c']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal-ctrl-alt-t/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal-ctrl-alt-return/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-mission-center/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-terminal/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-whisp/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-deepdive/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-dictation/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ampersand-newelle/']
+
+# Super+D is dictation. Bluefin bound it to show desktop; kept empty in case
+# a GNOME default ever claims it.
+[org.gnome.desktop.wm.keybindings]
+close=['<Alt>F4', '<Super>q']
+show-desktop=[]
+
+# Super+N was GNOME's "focus the active notification"; it opens Whisp now.
+[org.gnome.shell.keybindings]
+focus-active-notification=[]
+
+#-------------- Extensions --------------#
+
+# Alt+Tab shows only the windows on the monitor it is opened on.
+[org.gnome.shell.extensions.simple-taskbar]
+grid-alt-tab-isolate-monitors=true
+
+# Folder colours come from Hatter (ampersand-icon-accent), not ChromaLeon.
+[org.gnome.shell.extensions.chromaleon]
+recolor-folders=false
