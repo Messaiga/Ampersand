@@ -1,9 +1,18 @@
 ---
 name: Build container image
 on:
+  # Docs-only changes don't build: a push or PR whose files ALL match
+  # paths-ignore is skipped; if any other file changes, it builds as usual.
+  # Keep both lists the same.
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'spec/**'
+      - 'research/**'
+      - 'notes/**'
+      - 'docs/**'
   schedule:
     # Weekly, Wednesdays 10:05 UTC: the day after upstream Bluefin's usual
     # Tuesday stable release. Run manually (workflow_dispatch) for urgent fixes.
@@ -12,7 +21,11 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**/README.md'
+      - '**/*.md'
+      - 'spec/**'
+      - 'research/**'
+      - 'notes/**'
+      - 'docs/**'
   workflow_dispatch:
 
 env:
