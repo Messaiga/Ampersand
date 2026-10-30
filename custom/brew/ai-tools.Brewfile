@@ -2,7 +2,6 @@
 # Bluefin's AI tools list plus Claude Desktop. Newelle (the local assistant) is
 # a default app; ujust toggle-local-ai sets up its local model.
 tap "anomalyco/tap", trusted: true
-tap "charmbracelet/tap", trusted: true
 tap "llmmanorg/tap", trusted: true
 tap "ublue-os/tap", trusted: true
 tap "ublue-os/experimental-tap", trusted: true
@@ -22,7 +21,8 @@ brew "block-goose-cli" # Goose CLI: Goose in the terminal (recommended)
 cask "codex" # Codex CLI: OpenAI's coding agent
 cask "copilot-cli" # Copilot CLI: GitHub's coding agent
 brew "anomalyco/tap/opencode-v2" # OpenCode CLI: OpenCode in the terminal
-brew "charmbracelet/tap/crush" # Crush: Charm's coding agent
+# Crush (charmbracelet/tap/crush) is left out until that tap loads: trusting it
+# makes brew evaluate every formula in it, and its tone.rb is invalid (2026-10-30).
 brew "kimi-code" # Kimi Code: Moonshot's coding agent
 brew "mistral-vibe" # Mistral Vibe: Mistral's coding agent
 brew "qwen-code" # Qwen Code: Alibaba's coding agent
