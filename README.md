@@ -1,4 +1,4 @@
-# finpilot
+# Ampersand
 
 A template for building your own bootc operating system image, assembled the
 same way Bluefin, Aurora, and Bluefin LTS are: from shared OCI layers rather
