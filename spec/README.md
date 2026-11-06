@@ -41,6 +41,10 @@ code, not a second copy of it.
 
 Every domain file follows [_template.md](_template.md).
 
+`spec/worksheets/` is git-ignored scratch space for planning a change, such as
+a triage list. The decisions belong in the domain files; a worksheet is never
+the record.
+
 ## Keeping it current
 
 A change to a customization updates its domain file **in the same pull

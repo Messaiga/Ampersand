@@ -6,9 +6,11 @@ on:
   pull_request:
     paths:
       - "custom/flatpaks/**"
+      # Brewfile `flatpak` entries are Flatpak IDs, validated here too.
+      - "custom/brew/**"
       - "build/validate-flatpaks.sh"
       - "tests/contract/validate-flatpaks_test.bats"
-      - "tests/fixtures/flathub.flatpakrepo"
+      - "tests/fixtures/*.flatpakrepo"
       - ".github/workflows/validate-flatpaks.yml"
 jobs:
   validate:

@@ -2,3 +2,6 @@ cosign.key
 _build_*
 output
 _build-*/**
+
+# Scratch worksheets for planning spec changes; spec/ holds the outcome.
+spec/worksheets/
