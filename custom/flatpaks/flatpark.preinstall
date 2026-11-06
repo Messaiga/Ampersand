@@ -1,0 +1,14 @@
+# Flatpak applications from FlatPark, installed on first boot.
+#
+# flatpak preinstall has no Remote= key: it installs each app from whichever
+# configured remote carries it. FlatPark's descriptor ships from
+# projectbluefin/common (/usr/share/flatpak/remotes.d/flatpark.flatpakrepo), so
+# this file only works while Common still ships that remote.
+#
+# The file name is the remote's name on purpose: `just validate-flatpaks`
+# checks a <remote>.preinstall file against tests/fixtures/<remote>.flatpakrepo
+# instead of Flathub.
+
+# Office suite.
+[Flatpak Preinstall org.eurooffice.desktopeditors]
+Branch=stable

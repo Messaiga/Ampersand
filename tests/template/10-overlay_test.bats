@@ -35,6 +35,9 @@ setup() {
 
 	# Representative build context contents.
 	printf 'shared-payload\n' >"${CTX}/oci/common/shared/.keep"
+	DX_SRC="${CTX}/oci/common/bluefin/usr/share/ublue-os/homebrew/system-dx-flatpaks.Brewfile"
+	mkdir -p "$(dirname "${DX_SRC}")"
+	printf 'flatpak "org.gnome.Builder"\n' >"${DX_SRC}"
 	printf 'brew "tmux"\n' >"${CTX}/custom/brew/default.Brewfile"
 	printf 'brew "gcc"\n' >"${CTX}/custom/brew/development.Brewfile"
 	printf 'custom-apps-marker:\n\techo apps\n' >"${CTX}/custom/ujust/custom-apps.just"
@@ -150,6 +153,29 @@ teardown() {
 	[ -f "${HOMEBREW_DIR}/default.Brewfile" ]
 	[ -f "${HOMEBREW_DIR}/development.Brewfile" ]
 	grep -q 'brew "tmux"' "${HOMEBREW_DIR}/default.Brewfile"
+}
+
+@test "10-overlay: ships Bluefin's DX Flatpak Brewfile unchanged, and only that file" {
+	printf 'bluefin-opinion\n' >"$(dirname "${DX_SRC}")/system-flatpaks.Brewfile"
+	run bash "${SCRIPT}"
+	[ "$status" -eq 0 ]
+	cmp "${DX_SRC}" "${HOMEBREW_DIR}/system-dx-flatpaks.Brewfile"
+	[ ! -e "${HOMEBREW_DIR}/system-flatpaks.Brewfile" ]
+	! grep -q 'common/bluefin' "${RSYNC_LOG}"
+}
+
+@test "10-overlay: a custom Brewfile of the same name overrides the DX Brewfile" {
+	printf 'flatpak "org.example.Mine"\n' >"${CTX}/custom/brew/system-dx-flatpaks.Brewfile"
+	run bash "${SCRIPT}"
+	[ "$status" -eq 0 ]
+	grep -qx 'flatpak "org.example.Mine"' "${HOMEBREW_DIR}/system-dx-flatpaks.Brewfile"
+}
+
+@test "10-overlay: fails the build when Common stops shipping the DX Brewfile" {
+	rm -f "${DX_SRC}"
+	run bash "${SCRIPT}"
+	[ "$status" -ne 0 ]
+	[[ "$output" == *"Common no longer ships bluefin/usr/share/ublue-os/homebrew/system-dx-flatpaks.Brewfile"* ]]
 }
 
 @test "10-overlay: consolidates only .just files into 60-custom.just" {

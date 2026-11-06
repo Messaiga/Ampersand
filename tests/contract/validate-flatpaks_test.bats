@@ -7,7 +7,8 @@
 # Branch= (an empty one fails closed); every app-id is passed to
 # `flatpak remote-info` as data, as <app-id>//<branch>, so an unresolvable
 # branch fails; and an empty discovery result fails closed instead of
-# passing vacuously.
+# passing vacuously. A <remote>.preinstall with a pinned fixture resolves on
+# that remote; Brewfile `flatpak "<app-id>"` entries resolve on Flathub.
 #
 # Run with: bats tests/contract/validate-flatpaks_test.bats
 
@@ -30,8 +31,9 @@ case "$1" in
     remote-add)
         ;;
     remote-info)
-        # $1=remote-info $2=--user $3=flathub $4=<app-id>//<branch>
-        [[ $# -eq 4 && "$4" == *//* ]] || exit 99
+        # $1=remote-info $2=--user $3=<remote> $4=<app-id>//<branch>, or a
+        # bare <app-id> for a Brewfile entry, which brew installs unbranched.
+        [[ $# -eq 4 ]] || exit 99
         # Like flatpak's ref parser, reject a branch containing whitespace.
         if [[ "${4#*//}" =~ [[:space:]] ]]; then
             echo "error: Invalid branch ${4#*//}" >&2
@@ -282,4 +284,117 @@ EOF
     run bash "${SCRIPT}" "${FIXTURES}"
     [ "${status}" -eq 1 ]
     [[ "${output}" == *"FAIL: ${FIXTURES}/base.preinstall:1: not a # comment"* ]]
+}
+
+@test "validator resolves a file named after a pinned remote on that remote" {
+    cat > "${FIXTURES}/flatpark.preinstall" <<'EOF'
+[Flatpak Preinstall org.eurooffice.desktopeditors]
+Branch=stable
+EOF
+    cat > "${FIXTURES}/default.preinstall" <<'EOF'
+[Flatpak Preinstall org.gnome.Calculator]
+Branch=stable
+EOF
+    run bash "${SCRIPT}" "${FIXTURES}"
+    [ "${status}" -eq 0 ]
+    run grep -c '^remote-add --user --if-not-exists flatpark .*fixtures/flatpark.flatpakrepo$' "${CALLS}"
+    [ "${output}" = "1" ]
+    grep -qx 'remote-info --user flatpark org.eurooffice.desktopeditors//stable' "${CALLS}"
+    grep -qx 'remote-info --user flathub org.gnome.Calculator//stable' "${CALLS}"
+}
+
+@test "validator names the remote an app is missing from" {
+    export MOCK_REMOTE_FAILURES="org.example.Gone"
+    cat > "${FIXTURES}/flatpark.preinstall" <<'EOF'
+[Flatpak Preinstall org.example.Gone]
+Branch=stable
+EOF
+    run bash "${SCRIPT}" "${FIXTURES}"
+    [ "${status}" -eq 1 ]
+    [[ "${output}" == *"org.example.Gone: not on flatpark at branch stable (exit 42)"* ]]
+}
+
+@test "validator falls back to flathub for a file named after a remote with no fixture" {
+    cat > "${FIXTURES}/nosuchremote.preinstall" <<'EOF'
+[Flatpak Preinstall org.gnome.Calculator]
+Branch=stable
+EOF
+    run bash "${SCRIPT}" "${FIXTURES}"
+    [ "${status}" -eq 0 ]
+    grep -qx 'remote-info --user flathub org.gnome.Calculator//stable' "${CALLS}"
+    run grep -c '^remote-add' "${CALLS}"
+    [ "${output}" = "1" ]
+}
+
+_with_preinstall_and_brew() {
+    cat > "${FIXTURES}/base.preinstall" <<'EOF'
+[Flatpak Preinstall org.gnome.Calculator]
+Branch=stable
+EOF
+    BREWS="${WORKDIR}/brew"
+    mkdir -p "${BREWS}"
+}
+
+@test "validator resolves Brewfile flatpak entries on flathub, unbranched" {
+    _with_preinstall_and_brew
+    cat > "${BREWS}/gaming.Brewfile" <<'EOF'
+# Gaming
+brew "tmux"
+flatpak "com.valvesoftware.Steam"
+  flatpak "com.vysp3r.ProtonPlus" # trailing comment
+EOF
+    run bash "${SCRIPT}" "${FIXTURES}" "${BREWS}"
+    [ "${status}" -eq 0 ]
+    grep -qx 'remote-info --user flathub com.valvesoftware.Steam' "${CALLS}"
+    grep -qx 'remote-info --user flathub com.vysp3r.ProtonPlus' "${CALLS}"
+    # brew lines belong to validate-brewfiles.sh, not here.
+    ! grep -q 'tmux' "${CALLS}"
+    [[ "${output}" == *"3 app checks, 0 failures."* ]]
+}
+
+@test "validator fails a Brewfile flatpak entry that is not on flathub" {
+    _with_preinstall_and_brew
+    export MOCK_REMOTE_FAILURES="com.example.Missing"
+    printf 'flatpak "com.example.Missing"\n' > "${BREWS}/x.Brewfile"
+    run bash "${SCRIPT}" "${FIXTURES}" "${BREWS}"
+    [ "${status}" -eq 1 ]
+    [[ "${output}" == *"x.Brewfile:1: flatpak com.example.Missing: not on flathub (exit 42)"* ]]
+}
+
+@test "validator fails closed on a Brewfile flatpak entry with options" {
+    _with_preinstall_and_brew
+    printf 'flatpak "com.example.App", remote: "elsewhere"\n' > "${BREWS}/x.Brewfile"
+    run bash "${SCRIPT}" "${FIXTURES}" "${BREWS}"
+    [ "${status}" -eq 1 ]
+    [[ "${output}" == *'x.Brewfile:1: expected a literal flatpak "<app-id>" with no options'* ]]
+    ! grep -q 'com.example.App' "${CALLS}"
+}
+
+@test "validator fails closed on a computed Brewfile flatpak entry" {
+    _with_preinstall_and_brew
+    printf 'flatpak "com.example.#{name}"\n' > "${BREWS}/x.Brewfile"
+    run bash "${SCRIPT}" "${FIXTURES}" "${BREWS}"
+    [ "${status}" -eq 1 ]
+    [[ "${output}" == *"expected a literal flatpak"* ]]
+}
+
+@test "validator with one directory argument checks no Brewfiles" {
+    _with_preinstall_and_brew
+    printf 'flatpak "com.example.App"\n' > "${BREWS}/x.Brewfile"
+    run bash "${SCRIPT}" "${FIXTURES}"
+    [ "${status}" -eq 0 ]
+    ! grep -q 'com.example.App' "${CALLS}"
+}
+
+@test "validator fails closed when the Brewfile directory does not exist" {
+    _with_preinstall_and_brew
+    run bash "${SCRIPT}" "${FIXTURES}" "${WORKDIR}/nope"
+    [ "${status}" -eq 2 ]
+    [[ "${output}" == *"Brewfile directory does not exist"* ]]
+}
+
+@test "validator rejects more than two arguments" {
+    run bash "${SCRIPT}" a b c
+    [ "${status}" -eq 2 ]
+    [[ "${output}" == *"Usage:"* ]]
 }
