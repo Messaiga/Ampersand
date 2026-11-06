@@ -12,8 +12,7 @@ Default configuration for new users, and system files the image ships by path.
 | Item | Why it is here |
 |---|---|
 | `custom/config/environment.d/10-example.conf` | Template example, **inert**: every line is commented out. |
-
-`custom/files/` ships nothing.
+| `custom/files/usr/libexec/ampersand/flatpak-group.sh` | Install / complete / uninstall logic behind every app-group recipe. See [flatpaks.md](flatpaks.md). |
 
 ## Decisions
 

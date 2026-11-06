@@ -6,7 +6,10 @@ from Flathub. Nothing is embedded in the image or the ISO.
 
 ## Files
 
-- `default.preinstall` — the apps installed on first boot
+- `default.preinstall` — the Flathub apps installed on first boot
+- `flatpark.preinstall` — the FlatPark apps installed on first boot
+
+Apps a user opts into are not here: they are app groups in `custom/brew/`.
 
 ## Format
 
@@ -31,7 +34,16 @@ Two gotchas:
 ## Adding one
 
 Append a section to `default.preinstall`, or add another `.preinstall` file. Find
-the ID with `flatpak search`, or on [Flathub](https://flathub.org/).
+the ID with `flatpak search`, or on [Flathub](https://flathub.org/). Then list it
+in `spec/flatpaks.md`; the contract test fails until it is there.
+
+## Apps from another remote
+
+A preinstall file cannot name a remote: flatpak installs each app from
+whichever configured remote carries it. So the file name records the intent.
+`<remote>.preinstall` is validated against `tests/fixtures/<remote>.flatpakrepo`
+instead of Flathub, which is how `flatpark.preinstall` is checked against
+FlatPark. The image must also ship that remote; FlatPark's comes from Common.
 
 ## First boot
 

@@ -14,7 +14,8 @@ description: >-
 |---|---|---|
 | A system package the image needs to boot or run | `build/20-packages-and-services.sh` | at build time |
 | A CLI tool a user chooses to have | `custom/brew/*.Brewfile` | on demand, by the user |
-| A GUI application | `custom/flatpaks/*.preinstall` | on first boot |
+| A GUI application every user gets | `custom/flatpaks/*.preinstall` | on first boot |
+| A set of GUI applications a user opts into | `flatpak` lines in `custom/brew/<group>.Brewfile`, plus a recipe | on demand, by the user |
 | A command that configures the system | `custom/ujust/*.just` | available from first login |
 | A system file: unit, preset, tmpfiles.d | `custom/files/` | at build time |
 | Per-user config for new accounts | `custom/config/` | at build time, into `/etc/skel` |
@@ -40,8 +41,12 @@ Brewfiles in `custom/brew/`, plus a `ujust` recipe so users install it by name.
 
 ### Flatpak
 
-Preinstall declarations in `custom/flatpaks/`. The app must exist on Flathub;
-`just validate-flatpaks` checks.
+Preinstall declarations in `custom/flatpaks/`. The app must exist on Flathub,
+or on the remote a `<remote>.preinstall` file is named after;
+`just validate-flatpaks` checks. Opt-in apps are app groups instead: a Brewfile
+of `flatpak` lines and a one-line recipe that calls `flatpak-group.sh`
+([custom/brew/README.md](../../../custom/brew/README.md#app-groups)). Either
+way, list the app in `spec/flatpaks.md`.
 [custom/flatpaks/README.md](../../../custom/flatpaks/README.md) has the format and
 the first-boot behaviour.
 
