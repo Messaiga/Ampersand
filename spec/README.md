@@ -30,14 +30,14 @@ code, not a second copy of it.
 
 | File | Covers | Feeds README section | Status |
 |---|---|---|---|
-| [base-and-identity.md](base-and-identity.md) | Base image, name, vendor, update reference, signing posture | intro | planned |
-| [packages.md](packages.md) | RPM and COPR packages installed at build time | Added Packages (Build-time) | planned |
-| [services.md](services.md) | systemd units enabled or disabled | Configuration Changes | planned |
-| [flatpaks.md](flatpaks.md) | Flatpaks preinstalled on first boot | Added Applications → GUI apps | planned |
-| [brew.md](brew.md) | Brewfiles and what each installs | Added Applications → CLI tools | planned |
-| [ujust.md](ujust.md) | Custom `ujust` recipes | Configuration Changes | planned |
-| [config-and-files.md](config-and-files.md) | `custom/config` user defaults and `custom/files` system payloads | Configuration Changes | planned |
-| [removed-or-disabled.md](removed-or-disabled.md) | What the image drops, disables, or deliberately leaves out | Removed or Disabled | planned |
+| [base-and-identity.md](base-and-identity.md) | Base image, name, vendor, update reference, signing posture | intro | current |
+| [packages.md](packages.md) | RPM and COPR packages installed at build time | Added Packages (Build-time) | current |
+| [services.md](services.md) | systemd units enabled or disabled | Configuration Changes | current |
+| [flatpaks.md](flatpaks.md) | Flatpaks preinstalled on first boot | Added Applications → GUI apps | current |
+| [brew.md](brew.md) | Brewfiles and what each installs | Added Applications → CLI tools | current |
+| [ujust.md](ujust.md) | Custom `ujust` recipes | Configuration Changes | current |
+| [config-and-files.md](config-and-files.md) | `custom/config` user defaults and `custom/files` system payloads | Configuration Changes | current |
+| [removed-or-disabled.md](removed-or-disabled.md) | What the image drops, disables, or deliberately leaves out | Removed or Disabled | current |
 
 Every domain file follows [_template.md](_template.md).
 
