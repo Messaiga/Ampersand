@@ -67,10 +67,19 @@ esac
 exit 0
 EOF
 
+	# Like real sudo, --askpass needs a SUDO_ASKPASS program; SSH_ASKPASS does
+	# not count. The program sudo would run is logged.
 	cat >"${STUB_BIN}/sudo" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${SUDO_LOG}"
-[[ "$1" == --askpass ]] && shift
+if [[ "$1" == --askpass ]]; then
+	if [[ -z "${SUDO_ASKPASS:-}" ]]; then
+		echo "sudo: no askpass program specified, try setting SUDO_ASKPASS" >&2
+		exit 1
+	fi
+	printf 'askpass-program: %s\n' "${SUDO_ASKPASS}" >>"${SUDO_LOG}"
+	shift
+fi
 exec env STUB_AS_ROOT=1 "$@"
 EOF
 
@@ -181,7 +190,7 @@ refute_logged() {
 }
 
 @test "sudoif: uses sudo --askpass when SSH_ASKPASS and DISPLAY are set" {
-	run env -u SUDO_USER -u WAYLAND_DISPLAY SSH_ASKPASS=/usr/bin/ksshaskpass DISPLAY=:0 \
+	run env -u SUDO_USER -u SUDO_ASKPASS -u WAYLAND_DISPLAY SSH_ASKPASS=/usr/bin/ksshaskpass DISPLAY=:0 \
 		just --justfile "${SANDBOX}/Justfile" --working-directory "${SANDBOX}" \
 		sudoif true
 	[ "$status" -eq 0 ]
@@ -189,11 +198,30 @@ refute_logged() {
 }
 
 @test "sudoif: uses sudo --askpass when SSH_ASKPASS and WAYLAND_DISPLAY are set" {
-	run env -u SUDO_USER -u DISPLAY SSH_ASKPASS=/usr/bin/ksshaskpass WAYLAND_DISPLAY=wayland-0 \
+	run env -u SUDO_USER -u SUDO_ASKPASS -u DISPLAY SSH_ASKPASS=/usr/bin/ksshaskpass WAYLAND_DISPLAY=wayland-0 \
 		just --justfile "${SANDBOX}/Justfile" --working-directory "${SANDBOX}" \
 		sudoif true
 	[ "$status" -eq 0 ]
 	grep -qx -- '--askpass true' "${SUDO_LOG}"
+}
+
+@test "sudoif: hands SSH_ASKPASS to sudo as SUDO_ASKPASS (Fedora sets only SSH_ASKPASS)" {
+	# Regression: sudo --askpass ignores SSH_ASKPASS, so without the hand-over
+	# every rootful recipe failed on a Fedora desktop with "no askpass program
+	# specified".
+	run env -u SUDO_USER -u SUDO_ASKPASS -u WAYLAND_DISPLAY SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass DISPLAY=:0 \
+		just --justfile "${SANDBOX}/Justfile" --working-directory "${SANDBOX}" \
+		sudoif true
+	[ "$status" -eq 0 ]
+	grep -qx 'askpass-program: /usr/libexec/openssh/gnome-ssh-askpass' "${SUDO_LOG}"
+}
+
+@test "sudoif: an explicit SUDO_ASKPASS wins over SSH_ASKPASS" {
+	run env -u SUDO_USER -u WAYLAND_DISPLAY SUDO_ASKPASS=/usr/local/bin/my-askpass SSH_ASKPASS=/usr/bin/ksshaskpass DISPLAY=:0 \
+		just --justfile "${SANDBOX}/Justfile" --working-directory "${SANDBOX}" \
+		sudoif true
+	[ "$status" -eq 0 ]
+	grep -qx 'askpass-program: /usr/local/bin/my-askpass' "${SUDO_LOG}"
 }
 
 @test "sudoif: falls back to plain sudo when SSH_ASKPASS is set but no display is" {
