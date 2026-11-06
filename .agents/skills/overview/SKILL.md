@@ -45,6 +45,7 @@ defines three things:
 | `custom/files/` | System files overlaid onto `/`. |
 | `custom/config/` | Per-user config seeded into `/etc/skel/.config/`. |
 | `iso/` | Installer ISO and disk-image configuration. |
+| `spec/` | What this image customizes and why, one file per domain. Read before changing a customization; update in the same PR. Feeds the README. |
 | `tests/` | `contract/` (interfaces the image must satisfy) and `template/` (this repository's build wiring). |
 | `.github/` | Workflows, Renovate config, issue templates. |
 
