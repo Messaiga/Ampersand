@@ -15,6 +15,9 @@ These hold for every change:
   files. The `validate` status check runs shellcheck and hadolint on a pull
   request.
 - **Confirm before pushing** — show the diff and wait.
+- **Keep the spec current.** A change under `build/`, `custom/` or the
+  `Containerfile`'s `FROM` line updates its domain file in `spec/` in the same
+  PR. `spec/README.md` maps each domain to its file.
 
 ## Branches and releases
 

@@ -31,6 +31,16 @@ before. Substitute your own `{owner}/{repo}` throughout.
 See the Quick start in [README.md](../../../README.md#quick-start). Three identity
 sites, and `just test-contract` fails when they disagree.
 
+**Keep the repository name lowercase.** `promote-main-to-stable.yml` and
+`execute-release.yml` pass `github.event.repository.name` to shared workflows
+unchanged, and GitHub expressions cannot lowercase it. A repository named
+`Ampersand` builds and pushes fine — `build-image.yml` lowercases for itself —
+but the release gate then looks up `ghcr.io/<owner>/Ampersand`, fails with
+"Failed to resolve one or more digests", and labels the promotion
+`release/blocked`. Rename the repository rather than patching the workflows.
+Re-running an old run afterwards replays the old name, so dispatch fresh
+`Build and Push Image` and `Promote main to stable` runs instead.
+
 ## 2. Enable Actions
 
 Without this no workflow runs at all, including the first build.
