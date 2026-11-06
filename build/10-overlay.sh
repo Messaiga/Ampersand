@@ -30,7 +30,9 @@ set -euo pipefail
 # common/bluefin/ is imported into the build context but never overlaid:
 # shared/ is reusable runtime infrastructure, while bluefin/ is product
 # opinion, and nvidia/ is a paired hardware feature that must ship with a real
-# driver installation.
+# driver installation. The one exception is a single named file, never the
+# tree: Bluefin's system-dx-flatpaks.Brewfile, which backs `ujust
+# install-dx-apps` (see spec/flatpaks.md).
 ###############################################################################
 
 shopt -s nullglob
@@ -84,6 +86,21 @@ fi
 
 # Brewfiles consumed by first-user Homebrew setup.
 mkdir -p /usr/share/ublue-os/homebrew/
+
+# Bluefin's developer-experience Flatpaks, taken unchanged from Common so the
+# Common digest Renovate bumps keeps the list current. Copied first, so a
+# custom/brew file of the same name would deliberately win. Missing is a build
+# failure, not a skip: `ujust install-dx-apps` would otherwise ship pointing at
+# nothing.
+# The relative path is kept apart so it names the same file inside Common and
+# in the image.
+dx_brewfile=usr/share/ublue-os/homebrew/system-dx-flatpaks.Brewfile
+if [[ ! -f "/ctx/oci/common/bluefin/${dx_brewfile}" ]]; then
+	echo "::error::Common no longer ships bluefin/${dx_brewfile}" >&2
+	exit 1
+fi
+install -m0644 "/ctx/oci/common/bluefin/${dx_brewfile}" /usr/share/ublue-os/homebrew/system-dx-flatpaks.Brewfile
+
 cp /ctx/custom/brew/*.Brewfile /usr/share/ublue-os/homebrew/
 
 # Merge custom ujust recipes into the file the shared ujust entry point imports.

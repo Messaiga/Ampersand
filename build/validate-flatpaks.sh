@@ -9,9 +9,25 @@
 #     whole file, so malformed syntax looks identical to an empty list
 #   - every [Flatpak Preinstall <app-id>] section must declare a non-empty
 #     Branch= key (an empty one fails closed, never resolves on the remote)
-#   - every declared app-id must resolve on the flathub remote at its declared
-#     branch (queried as <app-id>//<branch>, so a malformed or unpublished
-#     branch fails instead of passing on the app-id alone)
+#   - every declared app-id must resolve on its remote at its declared branch
+#     (queried as <app-id>//<branch>, so a malformed or unpublished branch
+#     fails instead of passing on the app-id alone). The remote is Flathub,
+#     unless the file is named after another remote — <remote>.preinstall —
+#     that has a pinned descriptor at tests/fixtures/<remote>.flatpakrepo.
+#     flatpak preinstall has no Remote= key, so the file name is the only
+#     place that intent can be recorded.
+#
+# Brewfile `flatpak` entries (custom/brew/*.Brewfile) are Flatpak IDs too, and
+# are checked here rather than in build/validate-brewfiles.sh, because this
+# script owns the isolated flatpak state. Each must be a literal
+# `flatpak "<app-id>"` with no options: an option such as remote: would change
+# what `brew bundle` installs without this check seeing it, so it fails closed.
+# They resolve against Flathub with no branch, exactly as `brew bundle` runs
+# `flatpak install --system flathub <app-id>`.
+#
+# Arguments: with none, custom/flatpaks and custom/brew are both checked. With
+# one, only that preinstall directory. With two, that preinstall directory and
+# that Brewfile directory.
 #
 # Single implementation of the flatpak validation contract; the CI workflow
 # (.github/workflows/validate-flatpaks.yml) and `just validate-flatpaks` are
@@ -19,13 +35,23 @@
 
 main() (
     set -euo pipefail
-    if [[ $# -gt 1 ]]; then
-        echo "Usage: $0 [flatpak-directory]" >&2
+    if [[ $# -gt 2 ]]; then
+        echo "Usage: $0 [flatpak-directory [brew-directory]]" >&2
         exit 2
     fi
     root="${1:-custom/flatpaks}"
+    brew_root=""
+    if [[ $# -eq 0 ]]; then
+        brew_root="custom/brew"
+    elif [[ $# -eq 2 ]]; then
+        brew_root="$2"
+    fi
     if [[ ! -d "${root}" ]]; then
         printf 'Flatpak directory does not exist: %s\n' "${root}" >&2
+        exit 2
+    fi
+    if [[ -n "${brew_root}" && ! -d "${brew_root}" ]]; then
+        printf 'Brewfile directory does not exist: %s\n' "${brew_root}" >&2
         exit 2
     fi
     if ! command -v flatpak >/dev/null; then
@@ -34,7 +60,8 @@ main() (
     fi
 
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    remote_cfg="${script_dir}/../tests/fixtures/flathub.flatpakrepo"
+    fixtures="${script_dir}/../tests/fixtures"
+    remote_cfg="${fixtures}/flathub.flatpakrepo"
     if [[ ! -f "${remote_cfg}" ]]; then
         printf 'FAIL: Flathub remote descriptor not found: %s\n' "${remote_cfg}" >&2
         exit 1
@@ -47,6 +74,25 @@ main() (
     # nor mutated, and the pinned flathub descriptor is always added fresh.
     export FLATPAK_USER_DIR="${workdir}/flatpak"
     flatpak remote-add --user --if-not-exists flathub "${remote_cfg}"
+    declare -A added_remotes=([flathub]=1)
+
+    # The remote a preinstall file resolves against: its own name when a
+    # pinned descriptor exists for it, otherwise Flathub. Other remotes are
+    # added lazily, from their fixture, the first time a file needs them.
+    remote_for() {
+        local name
+        name="$(basename "$1")"
+        name="${name%.*}"
+        if [[ "${name}" != flathub && -f "${fixtures}/${name}.flatpakrepo" ]]; then
+            if [[ -z "${added_remotes[${name}]:-}" ]]; then
+                flatpak remote-add --user --if-not-exists "${name}" "${fixtures}/${name}.flatpakrepo" >&2
+                added_remotes[${name}]=1
+            fi
+            printf '%s\n' "${name}"
+        else
+            printf 'flathub\n'
+        fi
+    }
     # Materialize discovery so find/sort failures cannot become an empty success.
     find "${root}" -type f -iname '*.preinstall' -print0 | sort -z > "${workdir}/files"
     mapfile -d '' -t preinstalls < "${workdir}/files"
@@ -58,7 +104,8 @@ main() (
     failed=0
     checked=0
     for preinstall in "${preinstalls[@]}"; do
-        printf '\nPreinstall: %s\n' "${preinstall}"
+        remote="$(remote_for "${preinstall}")"
+        printf '\nPreinstall: %s (remote: %s)\n' "${preinstall}" "${remote}"
 
         # Syntax pass. flatpak parses these files with GKeyFile and, on a
         # malformed line, logs the error at g_info level and carries on with an
@@ -115,18 +162,53 @@ main() (
             # Branch=stable with trailing space) fails here instead of
             # resolving against the remote's default branch and passing.
             ref="${app_id}//${branch}"
-            if flatpak remote-info --user flathub "${ref}" > "${workdir}/output" 2>&1; then
+            if flatpak remote-info --user "${remote}" "${ref}" > "${workdir}/output" 2>&1; then
                 printf 'PASS: %s: %s (%s)\n' "${preinstall}" "${app_id}" "${branch}"
             else
                 rc=$?
                 failed=$((failed + 1))
-                printf 'FAIL: %s: %s: not on flathub at branch %q (exit %s)\n' "${preinstall}" "${app_id}" "${branch}" "${rc}" >&2
-                printf 'Command: flatpak remote-info --user flathub %q\n' "${ref}" >&2
+                printf 'FAIL: %s: %s: not on %s at branch %q (exit %s)\n' "${preinstall}" "${app_id}" "${remote}" "${branch}" "${rc}" >&2
+                printf 'Command: flatpak remote-info --user %s %q\n' "${remote}" "${ref}" >&2
                 sed 's/^/  /' "${workdir}/output" >&2
             fi
         done < <(sed -n 's/^\[Flatpak Preinstall \(.*\)\]$/\1/p' "${preinstall}")
     done
+
+    brewfiles=()
+    if [[ -n "${brew_root}" ]]; then
+        find "${brew_root}" -type f -name '*.Brewfile' -print0 | sort -z > "${workdir}/brewfiles"
+        mapfile -d '' -t brewfiles < "${workdir}/brewfiles"
+    fi
+    flatpak_entry='^[[:space:]]*flatpak[[:space:]]+"([A-Za-z0-9._-]+)"[[:space:]]*(#.*)?$'
+    flatpak_declaration='^[[:space:]]*flatpak([^[:alnum:]_]|$)'
+    for brewfile in "${brewfiles[@]}"; do
+        line_number=0
+        while IFS= read -r line || [[ -n "${line}" ]]; do
+            line_number=$((line_number + 1))
+            [[ "${line}" =~ ${flatpak_declaration} ]] || continue
+            if [[ ! "${line}" =~ ${flatpak_entry} ]]; then
+                failed=$((failed + 1))
+                printf 'FAIL: %s:%s: expected a literal flatpak "<app-id>" with no options: %s\n' "${brewfile}" "${line_number}" "${line}" >&2
+                continue
+            fi
+            app_id="${BASH_REMATCH[1]}"
+            checked=$((checked + 1))
+            if flatpak remote-info --user flathub "${app_id}" > "${workdir}/output" 2>&1; then
+                printf 'PASS: %s:%s: flatpak %s\n' "${brewfile}" "${line_number}" "${app_id}"
+            else
+                rc=$?
+                failed=$((failed + 1))
+                printf 'FAIL: %s:%s: flatpak %s: not on flathub (exit %s)\n' "${brewfile}" "${line_number}" "${app_id}" "${rc}" >&2
+                printf 'Command: flatpak remote-info --user flathub %q\n' "${app_id}" >&2
+                sed 's/^/  /' "${workdir}/output" >&2
+            fi
+        done < "${brewfile}"
+    done
+
     printf '\nValidation complete: %s preinstall files, %s app checks, %s failures.\n' "${#preinstalls[@]}" "${checked}" "${failed}"
+    if [[ -n "${brew_root}" ]]; then
+        printf 'Brewfiles checked for flatpak entries: %s\n' "${#brewfiles[@]}"
+    fi
     [[ "${failed}" -eq 0 ]]
 )
 

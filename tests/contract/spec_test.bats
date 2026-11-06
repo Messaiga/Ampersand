@@ -23,8 +23,14 @@ active_build_scripts() {
 	find "${REPO_ROOT}/build" -maxdepth 1 -name '[0-9]*.sh' | LC_ALL=C sort
 }
 
+# Preinstalled Flatpaks plus the app groups' Brewfile `flatpak` entries. The
+# DX group's Brewfile comes unchanged from Common, so its apps are inherited
+# and listed under "Inherited", not here.
 shipped_flatpaks() {
-	sed -n 's/^\[Flatpak Preinstall \(.*\)\]$/\1/p' "${REPO_ROOT}"/custom/flatpaks/*.preinstall | LC_ALL=C sort -u
+	{
+		sed -n 's/^\[Flatpak Preinstall \(.*\)\]$/\1/p' "${REPO_ROOT}"/custom/flatpaks/*.preinstall
+		sed -n 's/^[[:space:]]*flatpak[[:space:]]\{1,\}"\([^"]*\)".*/\1/p' "${REPO_ROOT}"/custom/brew/*.Brewfile
+	} | LC_ALL=C sort -u
 }
 
 shipped_recipes() {
@@ -63,8 +69,8 @@ shipped_config_files() {
 # Fails, naming each identifier, when $2 (shipped) and $3 (spec) differ.
 assert_agree() {
 	local domain=$1 shipped=$2 listed=$3 missing extra
-	missing="$(comm -23 <(printf '%s\n' "${shipped}" | sed '/^$/d') <(printf '%s\n' "${listed}" | sed '/^$/d'))"
-	extra="$(comm -13 <(printf '%s\n' "${shipped}" | sed '/^$/d') <(printf '%s\n' "${listed}" | sed '/^$/d'))"
+	missing="$(LC_ALL=C comm -23 <(printf '%s\n' "${shipped}" | sed '/^$/d') <(printf '%s\n' "${listed}" | sed '/^$/d'))"
+	extra="$(LC_ALL=C comm -13 <(printf '%s\n' "${shipped}" | sed '/^$/d') <(printf '%s\n' "${listed}" | sed '/^$/d'))"
 	if [[ -n "${missing}" ]]; then
 		printf 'FAIL: shipped but not in spec/%s.md "Current state":\n%s\n' "${domain}" "${missing}" >&2
 	fi
@@ -85,7 +91,7 @@ assert_agree() {
 	done
 }
 
-@test "spec: flatpaks.md lists exactly the preinstalled Flatpaks" {
+@test "spec: flatpaks.md lists exactly the preinstalled and app-group Flatpaks" {
 	assert_agree flatpaks "$(shipped_flatpaks)" "$(spec_items flatpaks)"
 }
 

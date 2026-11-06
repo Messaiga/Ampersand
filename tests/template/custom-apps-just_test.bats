@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Tests for custom/ujust/custom-apps.just recipes:
-#   install-default-apps, install-dev-tools.
+#   install-default-apps, install-dev-tools, and the Flatpak app-group
+#   recipes, which hand a Brewfile to flatpak-group.sh (tested on its own in
+#   flatpak-group_test.bats).
 #
 # Each shebang recipe body is extracted out of the justfile into a standalone
 # bash script and run against a PATH mock for brew, so the Brewfile path and
@@ -80,16 +82,50 @@ _run_recipe() {
     [ "${status}" -ne 0 ]
 }
 
-@test "every Brewfile referenced by a recipe is shipped by custom/brew" {
+@test "every Brewfile referenced by a recipe is shipped by the image" {
     # Guards against a Brewfile rename that would leave ujust pointing at a path
-    # the image never ships. Recipes here only bundle files the template owns;
-    # anything the shared layer ships is used directly, not wrapped.
-    local referenced
+    # the image never ships. Recipes bundle files the template owns, plus the
+    # one Brewfile 10-overlay.sh copies unchanged from Common's bluefin/ tree.
+    local referenced name
     referenced="$(grep -o '/usr/share/ublue-os/homebrew/[A-Za-z0-9._-]*\.Brewfile' "${APPS_JUST}" | sort -u)"
     [ -n "${referenced}" ]
     while IFS= read -r path; do
-        [ -f "${BREW_DIR}/$(basename "${path}")" ]
+        name="$(basename "${path}")"
+        if [[ "${name}" == system-dx-flatpaks.Brewfile ]]; then
+            grep -qF "homebrew/${name}" "${BATS_TEST_DIRNAME}/../../build/10-overlay.sh"
+        else
+            [ -f "${BREW_DIR}/${name}" ]
+        fi
     done <<< "${referenced}"
+}
+
+_group_recipes() {
+    # Only recipe bodies (indented lines) count; the file's header comment names
+    # the helper too.
+    awk '/^    .*flatpak-group\.sh/ { print recipe } /^[a-z][A-Za-z0-9_-]*:$/ { recipe = substr($0, 1, length($0) - 1) }' "${APPS_JUST}"
+}
+
+@test "app-group recipes hand their Brewfile to flatpak-group.sh" {
+    local recipe
+    while IFS= read -r recipe; do
+        _extract_recipe "${recipe}" "${WORKDIR}/${recipe}.sh"
+        grep -qE '^exec /usr/bin/bash /usr/libexec/ampersand/flatpak-group\.sh "[^"]+" /usr/share/ublue-os/homebrew/[A-Za-z0-9._-]+\.Brewfile$' "${WORKDIR}/${recipe}.sh"
+    done < <(_group_recipes)
+    [ "$(_group_recipes | wc -l)" -eq 6 ]
+}
+
+@test "every custom Brewfile of flatpak entries has an app-group recipe" {
+    # A group Brewfile no recipe installs is unreachable from ujust.
+    local brewfile
+    for brewfile in "${BREW_DIR}"/*.Brewfile; do
+        grep -q '^[[:space:]]*flatpak[[:space:]]' "${brewfile}" || continue
+        grep -qE "flatpak-group\.sh \"[^\"]+\" /usr/share/ublue-os/homebrew/$(basename "${brewfile}")\$" "${APPS_JUST}" ||
+            { echo "no recipe for $(basename "${brewfile}")" >&2; return 1; }
+    done
+}
+
+@test "the group helper ships through custom/files" {
+    [ -x "${BATS_TEST_DIRNAME}/../../custom/files/usr/libexec/ampersand/flatpak-group.sh" ]
 }
 
 @test "every custom-apps recipe declares a just group" {
