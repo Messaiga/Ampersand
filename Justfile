@@ -117,7 +117,10 @@ sudoif command *args:
         if [[ "${UID}" -eq 0 ]]; then
             "$@"
         elif [[ -n "${sudo_bin}" && -n "${SSH_ASKPASS:-}" ]] && [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-            "${sudo_bin}" --askpass "$@" || exit 1
+            # sudo --askpass runs SUDO_ASKPASS, not SSH_ASKPASS. Fedora exports
+            # only SSH_ASKPASS (/etc/profile.d/gnome-ssh-askpass.sh), so hand it
+            # over unless the caller chose a SUDO_ASKPASS of their own.
+            SUDO_ASKPASS="${SUDO_ASKPASS:-${SSH_ASKPASS}}" "${sudo_bin}" --askpass "$@" || exit 1
         elif [[ -n "${sudo_bin}" ]]; then
             "${sudo_bin}" "$@" || exit 1
         else
