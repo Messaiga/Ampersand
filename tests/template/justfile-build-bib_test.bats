@@ -217,7 +217,7 @@ bib_run_args() {
     # BIB is given a reference that must resolve in local storage.
     run_just build-iso
     [ "$status" -eq 0 ]
-    grep -qF "tag localhost/finpilot:stable ghcr.io/projectbluefin/finpilot:stable" "${PODMAN_LOG}"
+    grep -qF "tag localhost/ampersand:stable ghcr.io/projectbluefin/finpilot:stable" "${PODMAN_LOG}"
 }
 
 @test "build-qcow2 never reads image-info.json and never re-tags" {
@@ -229,7 +229,7 @@ bib_run_args() {
     [ "$status" -ne 0 ]
     run grep -q '^tag ' "${PODMAN_LOG}"
     [ "$status" -ne 0 ]
-    [[ "$(bib_run_args)" == *"localhost/finpilot:stable"* ]]
+    [[ "$(bib_run_args)" == *"localhost/ampersand:stable"* ]]
 }
 
 @test "build-qcow2 honours an explicit target image and tag" {
